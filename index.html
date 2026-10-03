@@ -8,6 +8,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Merriweather:wght@300;400;700&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Script Oficial de Google Identity Services para Drive Sync -->
+    <script src="https://accounts.google.com/gsi/client" async defer onload="gisLoaded()"></script>
+
     <style>
         :root {
             /* Tema Clásico */
@@ -170,8 +173,6 @@
             outline: 3px solid var(--primary) !important;
             outline-offset: 3px;
             box-shadow: 0 0 20px rgba(59, 130, 246, 0.4) !important;
-            border-radius: 12px;
-            background-color: var(--bg-card) !important;
             transition: outline 0.2s ease, box-shadow 0.2s ease;
         }
 
@@ -233,6 +234,10 @@
                 <div id="main-menu-dropdown" class="absolute right-0 mt-2 w-56 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-xl hidden flex-col overflow-hidden z-[100] py-2">
                     <button onclick="startGuidedTour()" class="w-full text-left px-4 py-3 hover:bg-[var(--bg-main)] transition-colors flex items-center gap-3 font-semibold text-sm">
                         <i class="fas fa-route text-[var(--primary)] w-5 text-center text-lg"></i> Recorrido Guiado
+                    </button>
+                    <!-- Nueva Función: Google Drive -->
+                    <button onclick="openDriveModal(); document.getElementById('main-menu-dropdown').classList.add('hidden')" class="w-full text-left px-4 py-3 hover:bg-[var(--bg-main)] transition-colors flex items-center gap-3 font-semibold text-sm border-t border-[var(--border-color)]">
+                        <i class="fab fa-google-drive text-[#1fa463] w-5 text-center text-lg"></i> Google Drive Sync
                     </button>
                     <button onclick="openExportModal(); document.getElementById('main-menu-dropdown').classList.add('hidden')" class="w-full text-left px-4 py-3 hover:bg-[var(--bg-main)] transition-colors flex items-center gap-3 font-semibold text-sm border-t border-[var(--border-color)]">
                         <i class="fas fa-file-export text-[var(--text-muted)] w-5 text-center text-lg"></i> Exportar Proyecto
@@ -369,7 +374,6 @@
             <div id="section-editor-container" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
         </section>
 
-        <!-- VISTA: ¡ESCRIBE! -->
         <section id="view-escribe" class="view hidden">
             <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
                 <div class="flex items-center gap-4">
@@ -465,6 +469,43 @@
                         <button onclick="changeFont('serif')" class="p-4 border rounded-xl hover:border-[var(--primary)] text-left font-serif text-sm font-bold transition-colors">Merriweather (Estilo Novela)</button>
                         <button onclick="changeFont('cursive')" class="p-4 border rounded-xl hover:border-[var(--primary)] text-left text-lg font-bold transition-colors" style="font-family: 'Caveat', cursive;">Caveat (Escritura manual)</button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Drive Sync -->
+    <div id="modal-drive" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-[var(--modal-overlay)] backdrop-blur-sm" onclick="closeModal('drive')"></div>
+        <div class="card rounded-3xl shadow-2xl relative z-10 w-full max-w-md p-8 transform transition-all text-center">
+            <div class="flex justify-between items-center mb-6 border-b border-[var(--border-color)] pb-3">
+                <h2 class="text-2xl font-bold flex items-center gap-2"><i class="fab fa-google-drive text-[#1fa463]"></i> Sync Drive</h2>
+                <button onclick="closeModal('drive')" class="text-[var(--text-muted)] hover:text-red-500 text-2xl">&times;</button>
+            </div>
+            
+            <p class="text-sm text-[var(--text-muted)] mb-6 text-left">
+                Guarda tus proyectos de <b>¡Escribe!</b> de forma segura en Google Drive para continuar trabajando en ellos desde cualquier dispositivo.
+            </p>
+            
+            <!-- Estado No Conectado -->
+            <div id="drive-auth-btn">
+                <button onclick="authDrive()" class="w-full py-3 rounded-xl border border-[var(--border-color)] font-bold flex items-center justify-center gap-3 hover:bg-[var(--bg-main)] transition-colors shadow-sm">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/Google_Drive_icon_%282020%29.svg" alt="Drive" class="w-6 h-6">
+                    Vincular cuenta de Google
+                </button>
+            </div>
+
+            <!-- Estado Conectado -->
+            <div id="drive-actions" class="hidden space-y-4">
+                <button onclick="uploadToDrive()" class="w-full btn-primary py-3 rounded-xl font-bold flex items-center justify-center gap-3 shadow-lg">
+                    <i class="fas fa-cloud-upload-alt text-lg"></i> Guardar en Drive
+                </button>
+                <button onclick="downloadFromDrive()" class="w-full py-3 rounded-xl border-2 border-[var(--primary)] text-[var(--primary)] font-bold flex items-center justify-center gap-3 hover:bg-[var(--primary)] hover:text-white transition-colors">
+                    <i class="fas fa-cloud-download-alt text-lg"></i> Descargar de Drive
+                </button>
+                <div class="text-xs text-red-500 text-left mt-3 bg-red-50 p-3 rounded-lg border border-red-100 flex gap-2 items-start">
+                    <i class="fas fa-exclamation-triangle mt-1"></i> 
+                    <p><strong>Cuidado:</strong> Al descargar, se sobrescribirán los proyectos que tengas actualmente en la memoria de este dispositivo.</p>
                 </div>
             </div>
         </div>
@@ -720,75 +761,151 @@
 
         // CONFIGURACIÓN DEL RECORRIDO GUIADO INTERACTIVO
         const INTERACTIVE_TOUR_STEPS = [
-            {
-                view: 'home',
-                targetSelector: '#tour-target-newproj',
-                title: 'Mis Proyectos',
-                text: 'Bienvenido. Aquí verás todas tus obras guardadas. Usa este botón cuando quieras crear una nueva novela.',
-                prepare: () => {
-                    if (!window.APP_STATE.projects || window.APP_STATE.projects.length === 0) {
-                        const demoProj = {
-                            id: 'proj_demo',
-                            title: "Mi Novela Demo", 
-                            updatedAt: Date.now(),
-                            sections: { core: { premise: "Un escritor descubre un portal en su máquina de escribir..." }, world: {}, structure: {} },
-                            characters: [{ id: 'c1', name: 'Elena', role: 'Protagonista', desire: 'Desvelar la verdad', need: 'Aceptar el pasado' }],
-                            timelineEvents: [{ id: 'e1', title: 'El Descubrimiento', era: 'Principal', year: '2026', desc: 'Encuentra el manuscrito antiguo.' }],
-                            chapters: [{ id: 'ch1', title: 'Capítulo 1: El Comienzo', content: 'La noche era fría y la lluvia golpeaba con fuerza los cristales del despacho...' }] 
-                        };
-                        window.APP_STATE.projects.push(demoProj);
-                        window.APP_STATE.activeProjectId = demoProj.id;
-                        saveData();
-                    } else {
-                        window.APP_STATE.activeProjectId = window.APP_STATE.projects[0].id;
-                    }
-                }
-            },
-            {
-                view: 'project',
-                targetSelector: '#tour-target-title',
-                title: 'Título del Proyecto',
-                text: 'Haz clic en el título de la obra para editarlo en cualquier momento. ¡Todo se guarda solo!'
-            },
-            {
-                view: 'project',
-                targetSelector: '#tour-target-core',
-                title: '01. El Núcleo',
-                text: 'Define la Premisa, el Tema, los Riesgos y el Final. Será la brújula narrative que guíe tu historia.'
-            },
-            {
-                view: 'characters',
-                targetSelector: '#tour-target-minigame',
-                title: 'Personajes y Minijuego',
-                text: 'Crea fichas completas y atrévete a jugar a este minijuego. Te lanzará preguntas para conocerlos a fondo.'
-            },
-            {
-                view: 'timeline',
-                targetSelector: '#tour-target-event',
-                title: '05. Cronología',
-                text: 'Pulsa aquí para añadir eventos. Se organizarán visualmente por Eras y espaciados matemáticamente.'
-            },
-            {
-                view: 'escribe',
-                targetSelector: '#word-counter',
-                title: '06. Manuscrito y Contador',
-                text: 'Aquí verás el contador de palabras de tu capítulo en vivo. ¡A escribir sin límites!'
-            },
-            {
-                view: 'escribe',
-                targetSelector: '#tour-target-refs',
-                title: 'Buscador de Referencias',
-                text: 'Este botón abre un panel con tus notas, fichas y trama sin tener que abandonar el editor de texto.'
-            },
-            {
-                view: 'home',
-                targetSelector: '#main-menu-btn',
-                title: 'Menú Principal',
-                text: 'Desde aquí podrás exportar tu novela a TXT, personalizar los colores, o repetir este tour.'
-            }
+            { view: 'home', targetSelector: '#tour-target-newproj', title: 'Mis Proyectos', text: 'Bienvenido. Aquí verás todas tus obras guardadas. Usa este botón cuando quieras crear una nueva novela.', prepare: () => { if (!window.APP_STATE.projects || window.APP_STATE.projects.length === 0) { const demoProj = { id: 'proj_demo', title: "Mi Novela Demo", updatedAt: Date.now(), sections: { core: { premise: "Un escritor descubre un portal en su máquina de escribir..." }, world: {}, structure: {} }, characters: [{ id: 'c1', name: 'Elena', role: 'Protagonista', desire: 'Desvelar la verdad', need: 'Aceptar el pasado' }], timelineEvents: [{ id: 'e1', title: 'El Descubrimiento', era: 'Principal', year: '2026', desc: 'Encuentra el manuscrito antiguo.' }], chapters: [{ id: 'ch1', title: 'Capítulo 1: El Comienzo', content: 'La noche era fría y la lluvia golpeaba con fuerza los cristales del despacho...' }] }; window.APP_STATE.projects.push(demoProj); window.APP_STATE.activeProjectId = demoProj.id; saveData(); } else { window.APP_STATE.activeProjectId = window.APP_STATE.projects[0].id; } } },
+            { view: 'project', targetSelector: '#tour-target-title', title: 'Título del Proyecto', text: 'Haz clic en el título de la obra para editarlo en cualquier momento. ¡Todo se guarda solo!' },
+            { view: 'project', targetSelector: '#tour-target-core', title: '01. El Núcleo', text: 'Define la Premisa, el Tema, los Riesgos y el Final. Será la brújula narrative que guíe tu historia.' },
+            { view: 'characters', targetSelector: '#tour-target-minigame', title: 'Personajes y Minijuego', text: 'Crea fichas completas y atrévete a jugar a este minijuego. Te lanzará preguntas para conocerlos a fondo.' },
+            { view: 'timeline', targetSelector: '#tour-target-event', title: '05. Cronología', text: 'Pulsa aquí para añadir eventos. Se organizarán visualmente por Eras y espaciados matemáticamente.' },
+            { view: 'escribe', targetSelector: '#word-counter', title: '06. Manuscrito y Contador', text: 'Aquí verás el contador de palabras de tu capítulo en vivo. ¡A escribir sin límites!' },
+            { view: 'escribe', targetSelector: '#tour-target-refs', title: 'Buscador de Referencias', text: 'Este botón abre un panel con tus notas, fichas y trama sin tener que abandonar el editor de texto.' },
+            { view: 'home', targetSelector: '#main-menu-btn', title: 'Menú Principal', text: 'Desde aquí podrás exportar tu novela a TXT, sincronizar con Google Drive, personalizar los colores, o repetir este tour.' }
         ];
 
         let activeTourIndex = 0;
+
+        // ------------- SISTEMA DE GOOGLE DRIVE SYNC -------------
+        let tokenClient;
+        let driveToken = null;
+        const DRIVE_CLIENT_ID = '974564044102-0f57svmcnht8udoh3f0oeasj3j1kfc9g.apps.googleusercontent.com';
+        
+        window.gisLoaded = function() {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: DRIVE_CLIENT_ID,
+                // Usamos drive.file por seguridad: solo accede a los archivos creados por esta app.
+                scope: 'https://www.googleapis.com/auth/drive.file',
+                callback: (resp) => {
+                    if (resp.error) {
+                        console.error(resp);
+                        window.showToast("Error de conexión con Google", "error");
+                        return;
+                    }
+                    driveToken = resp.access_token;
+                    document.getElementById('drive-auth-btn').classList.add('hidden');
+                    document.getElementById('drive-actions').classList.remove('hidden');
+                    window.showToast("Cuenta de Google vinculada con éxito", "success");
+                },
+            });
+        };
+
+        window.openDriveModal = function() {
+            window.openModal('drive');
+            if (driveToken) {
+                document.getElementById('drive-auth-btn').classList.add('hidden');
+                document.getElementById('drive-actions').classList.remove('hidden');
+            }
+        };
+
+        window.authDrive = function() {
+            if(tokenClient) {
+                tokenClient.requestAccessToken({prompt: 'consent'});
+            } else {
+                window.showToast("La conexión con Google aún no ha cargado. Espera unos segundos.", "info");
+            }
+        };
+
+        async function getDriveFileId() {
+            const query = encodeURIComponent("name='escribe_sync_data.json' and trashed=false");
+            const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}`, {
+                headers: { Authorization: `Bearer ${driveToken}` }
+            });
+            const data = await res.json();
+            if(data.files && data.files.length > 0) return data.files[0].id;
+            return null;
+        }
+
+        window.uploadToDrive = async function() {
+            window.showToast("Guardando en Drive...", "info");
+            try {
+                const fileId = await getDriveFileId();
+                const appData = localStorage.getItem(STORAGE_KEY) || "{}";
+                const metadata = { name: 'escribe_sync_data.json', mimeType: 'application/json' };
+                
+                const boundary = '-------314159265358979323846';
+                const delimiter = "\r\n--" + boundary + "\r\n";
+                const close_delim = "\r\n--" + boundary + "--";
+
+                let multipartRequestBody =
+                    delimiter +
+                    'Content-Type: application/json\r\n\r\n' +
+                    JSON.stringify(metadata) +
+                    delimiter +
+                    'Content-Type: application/json\r\n\r\n' +
+                    appData +
+                    close_delim;
+
+                let url = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+                let method = 'POST';
+                if(fileId) {
+                    url = `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`;
+                    method = 'PATCH';
+                }
+
+                const res = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Authorization': `Bearer ${driveToken}`,
+                        'Content-Type': `multipart/related; boundary=${boundary}`
+                    },
+                    body: multipartRequestBody
+                });
+
+                if(res.ok) {
+                    window.showToast("¡Proyectos sincronizados y guardados en Google Drive!", "success");
+                    window.closeModal('drive');
+                } else {
+                    throw new Error("HTTP Status: " + res.status);
+                }
+            } catch(e) {
+                console.error(e);
+                window.showToast("Ocurrió un error al guardar en Google Drive", "error");
+            }
+        };
+
+        window.downloadFromDrive = async function() {
+            window.showToast("Buscando copia de seguridad...", "info");
+            try {
+                const fileId = await getDriveFileId();
+                if(!fileId) {
+                    window.showToast("No se encontró ningún archivo de Escribe en tu cuenta de Google Drive.", "error");
+                    return;
+                }
+                
+                const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+                    headers: { 'Authorization': `Bearer ${driveToken}` }
+                });
+                
+                if(res.ok) {
+                    const data = await res.text();
+                    
+                    try {
+                        JSON.parse(data); // Validación de seguridad antes de guardar
+                    } catch(jsonErr) {
+                        window.showToast("El archivo descargado está corrupto.", "error");
+                        return;
+                    }
+
+                    localStorage.setItem(STORAGE_KEY, data);
+                    window.showToast("¡Datos restaurados con éxito! Recargando...", "success");
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    throw new Error("HTTP Status: " + res.status);
+                }
+            } catch(e) {
+                console.error(e);
+                window.showToast("Ocurrió un error al descargar de Google Drive", "error");
+            }
+        };
+        // --------------------------------------------------------
 
         window.startGuidedTour = function() {
             document.getElementById('main-menu-dropdown').classList.add('hidden');
@@ -1371,7 +1488,7 @@
                         <h4 class="font-bold truncate text-sm">${escapeHtml(c.title)}</h4>
                         <span class="text-xs text-[var(--text-muted)] font-serif italic line-clamp-1 mt-1">${escapeHtml(snippet)}</span>
                     </div>
-                    <button onclick="event.stopPropagation(); window.deleteChapter('${c.id}')" class="text-red-500 hover:bg-red-50 p-2 rounded-lg opacity-50 hover:opacity-100 ml-2"><i class="fas fa-trash-alt"></i></button>
+                    <button onclick="event.stopPropagation(); window.deleteChapter('${c.id}')" class="text-red-500 hover:bg-red-50 p-2 rounded-lg opacity-50 hover:opacity-10 ml-2"><i class="fas fa-trash-alt"></i></button>
                 `;
                 listDiv.appendChild(d);
             });
