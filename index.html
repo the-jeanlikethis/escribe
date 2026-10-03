@@ -1,0 +1,1813 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Escribe!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Merriweather:wght@300;400;700&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            /* Tema Clásico */
+            --bg-main: #f3f4f6;
+            --bg-card: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --border-color: #e5e7eb;
+            --modal-overlay: rgba(0,0,0,0.5);
+            --font-family: 'Inter', sans-serif;
+            --timeline-bar: #93c5fd;
+        }
+
+        [data-theme="dark"] {
+            --bg-main: #111827;
+            --bg-card: #1f2937;
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --primary: #8b5cf6;
+            --primary-hover: #7c3aed;
+            --border-color: #374151;
+            --modal-overlay: rgba(0,0,0,0.7);
+            --timeline-bar: #4c1d95;
+        }
+
+        [data-theme="paper"] {
+            --bg-main: #eaddcf;
+            --bg-card: #f4ebd8;
+            --text-main: #43302b;
+            --text-muted: #735d55;
+            --primary: #9c6644;
+            --primary-hover: #7f5539;
+            --border-color: #d6c5b3;
+            --modal-overlay: rgba(67, 48, 43, 0.4);
+            --timeline-bar: #ddb892;
+        }
+
+        [data-theme="kawaii"] {
+            --bg-main: #ffe5ec;
+            --bg-card: #fff0f3;
+            --text-main: #5c4d6c;
+            --text-muted: #9c89b8;
+            --primary: #ffb5a7;
+            --primary-hover: #fcd5ce;
+            --border-color: #f8edeb;
+            --modal-overlay: rgba(255, 181, 167, 0.4);
+            --timeline-bar: #fcd5ce;
+        }
+
+        [data-font="sans"] { --font-family: 'Inter', sans-serif; }
+        [data-font="serif"] { --font-family: 'Merriweather', serif; }
+        [data-font="cursive"] { --font-family: 'Caveat', cursive; font-size: 1.1em; }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: var(--font-family);
+            transition: background-color 0.3s ease, color 0.3s ease;
+            margin: 0; padding: 0; min-height: 100vh;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s, box-shadow 0.2s, background-color 0.3s, border-color 0.3s;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary { background-color: var(--primary); color: white; transition: background-color 0.2s; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+        .text-primary { color: var(--primary); }
+        .border-primary { border-color: var(--primary); }
+
+        input, textarea, select {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            transition: border-color 0.2s;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none; border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary);
+        }
+
+        /* Estilo para inputs limpios sin borde ni fondo forzado */
+        input.clean-input, textarea.clean-input {
+            background-color: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            outline: none !important;
+            padding: 0 !important;
+        }
+
+        textarea.auto-expand { 
+            overflow-y: hidden; 
+            resize: none; 
+            min-height: 120px; 
+            box-sizing: border-box; 
+            width: 100%;
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-main); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        .kawaii-element { display: none; position: fixed; pointer-events: none; z-index: 0; opacity: 0.6; font-size: 24px; animation: float 10s infinite linear; }
+        [data-theme="kawaii"] .kawaii-element { display: block; }
+        @keyframes float {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(30px, -30px) rotate(10deg); }
+            50% { transform: translate(60px, 0) rotate(0deg); }
+            75% { transform: translate(30px, 30px) rotate(-10deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        .hidden { display: none !important; }
+
+        .timeline-track-container {
+            position: relative; height: 120px; width: 100%; margin-top: 2rem; margin-bottom: 2rem;
+        }
+        .timeline-thick-bar {
+            position: absolute; top: 50%; left: 0; right: 0; height: 16px;
+            background-color: var(--timeline-bar);
+            border-radius: 8px; transform: translateY(-50%);
+        }
+        .timeline-node {
+            position: absolute; top: 50%; transform: translate(-50%, -50%);
+            width: 20px; height: 20px; background-color: var(--bg-card);
+            border: 4px solid var(--primary); border-radius: 50%;
+            cursor: pointer; z-index: 10; transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .timeline-node:hover { transform: translate(-50%, -50%) scale(1.4); z-index: 20; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .timeline-node-label {
+            position: absolute; top: 30px; left: 50%; transform: translateX(-50%);
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            padding: 6px 10px; border-radius: 6px; font-size: 0.8rem; white-space: nowrap;
+            color: var(--text-main); font-weight: bold; pointer-events: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center;
+        }
+        .timeline-node:nth-child(even) .timeline-node-label { top: auto; bottom: 30px; }
+
+        /* Toast Notifications */
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { padding: 12px 20px; border-radius: 8px; color: white; font-weight: bold; font-size: 0.875rem; opacity: 0; transform: translateY(20px); transition: opacity 0.3s, transform 0.3s; }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast.success { background-color: #10b981; }
+        .toast.error { background-color: #ef4444; }
+        .toast.info { background-color: var(--primary); }
+
+        /* Resaltado del Tour */
+        .tour-active-highlight {
+            position: relative !important;
+            z-index: 10001 !important;
+            outline: 3px solid var(--primary) !important;
+            outline-offset: 3px;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4) !important;
+            border-radius: 12px;
+            background-color: var(--bg-card) !important;
+            transition: outline 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        /* Flechas indicadoras en punta del Popover */
+        #tour-popover {
+            position: fixed;
+            z-index: 10002;
+            transition: top 0.2s ease, left 0.2s ease, transform 0.2s ease;
+        }
+
+        #tour-popover.arrow-top::before {
+            content: ''; position: absolute; top: -10px;
+            left: var(--arrow-left, 50%); transform: translateX(-50%);
+            border-width: 0 10px 10px 10px; border-style: solid;
+            border-color: transparent transparent var(--primary) transparent;
+        }
+        #tour-popover.arrow-top::after {
+            content: ''; position: absolute; top: -7px;
+            left: var(--arrow-left, 50%); transform: translateX(-50%);
+            border-width: 0 9px 9px 9px; border-style: solid;
+            border-color: transparent transparent var(--bg-card) transparent;
+        }
+
+        #tour-popover.arrow-bottom::before {
+            content: ''; position: absolute; bottom: -10px;
+            left: var(--arrow-left, 50%); transform: translateX(-50%);
+            border-width: 10px 10px 0 10px; border-style: solid;
+            border-color: var(--primary) transparent transparent transparent;
+        }
+        #tour-popover.arrow-bottom::after {
+            content: ''; position: absolute; bottom: -7px;
+            left: var(--arrow-left, 50%); transform: translateX(-50%);
+            border-width: 9px 9px 0 9px; border-style: solid;
+            border-color: var(--bg-card) transparent transparent transparent;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="kawaii-element" style="top: 10%; left: 10%; animation-delay: 0s;">✨</div>
+    <div class="kawaii-element" style="top: 80%; left: 20%; animation-delay: 2s;">🌸</div>
+    <div class="kawaii-element" style="top: 30%; left: 80%; animation-delay: 4s;">🦋</div>
+    <div class="kawaii-element" style="top: 70%; left: 70%; animation-delay: 1s;">🍡</div>
+
+    <nav class="sticky top-0 z-40 backdrop-blur-md bg-[var(--bg-card)] bg-opacity-90 border-b border-[var(--border-color)] shadow-sm p-4 flex justify-between items-center">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="navigate('home')">
+            <i class="fas fa-feather-alt text-2xl text-[var(--primary)]"></i>
+            <h1 class="text-xl font-bold tracking-tight">¡Escribe!</h1>
+        </div>
+        <div class="flex items-center gap-2 sm:gap-4">
+            <span id="save-indicator" class="hidden sm:inline-flex text-xs font-semibold text-[var(--primary)] opacity-0 transition-opacity items-center gap-1"><i class="fas fa-check-circle"></i> Guardado</span>
+            
+            <!-- Menú Desplegable -->
+            <div class="relative">
+                <button id="main-menu-btn" onclick="toggleMainMenu()" class="text-[var(--text-muted)] hover:text-[var(--primary)] transition-colors p-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] shadow-sm relative z-50 flex items-center justify-center w-10 h-10" title="Menú Principal">
+                    <i class="fas fa-bars text-lg"></i>
+                </button>
+                
+                <div id="main-menu-dropdown" class="absolute right-0 mt-2 w-56 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl shadow-xl hidden flex-col overflow-hidden z-[100] py-2">
+                    <button onclick="startGuidedTour()" class="w-full text-left px-4 py-3 hover:bg-[var(--bg-main)] transition-colors flex items-center gap-3 font-semibold text-sm">
+                        <i class="fas fa-route text-[var(--primary)] w-5 text-center text-lg"></i> Recorrido Guiado
+                    </button>
+                    <button onclick="openExportModal(); document.getElementById('main-menu-dropdown').classList.add('hidden')" class="w-full text-left px-4 py-3 hover:bg-[var(--bg-main)] transition-colors flex items-center gap-3 font-semibold text-sm border-t border-[var(--border-color)]">
+                        <i class="fas fa-file-export text-[var(--text-muted)] w-5 text-center text-lg"></i> Exportar Proyecto
+                    </button>
+                    <button onclick="openSettingsModal(); document.getElementById('main-menu-dropdown').classList.add('hidden')" class="w-full text-left px-4 py-3 hover:bg-[var(--bg-main)] transition-colors flex items-center gap-3 font-semibold text-sm border-t border-[var(--border-color)]">
+                        <i class="fas fa-cog text-[var(--text-muted)] w-5 text-center text-lg"></i> Ajustes y Tema
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </nav>
+
+    <div id="toast-container"></div>
+
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-6xl relative z-10 min-h-[calc(100vh-80px)]">
+        
+        <section id="view-home" class="view">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+                <div>
+                    <h2 class="text-3xl font-bold">Mis Proyectos</h2>
+                    <p class="text-sm text-[var(--text-muted)] mt-1 font-medium">La herramienta definitiva para superar el temor a la hoja en blanco</p>
+                </div>
+                <button id="tour-target-newproj" onclick="createNewProject()" class="btn-primary px-6 py-3 rounded-xl font-semibold flex items-center gap-2 shadow-lg w-full sm:w-auto justify-center">
+                    <i class="fas fa-plus"></i> Nuevo Proyecto
+                </button>
+            </div>
+            
+            <div id="projects-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            
+            <div id="empty-projects-msg" class="col-span-full text-center py-20 hidden card rounded-2xl border-dashed">
+                <i class="fas fa-book-open text-6xl mb-4 opacity-40 text-[var(--text-muted)]"></i>
+                <p class="text-xl font-bold">Aún no tienes proyectos creados.</p>
+                <p class="text-sm text-[var(--text-muted)] mt-2">Haz clic en "Nuevo Proyecto" para dar vida a tu historia.</p>
+            </div>
+        </section>
+
+        <section id="view-project" class="view hidden">
+            <div class="mb-8 flex flex-wrap items-center gap-4 border-b border-[var(--border-color)] pb-4">
+                <button onclick="navigate('home')" class="text-[var(--text-muted)] hover:text-[var(--primary)] p-3 rounded-xl card card-hover">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="flex-1 min-w-[250px] p-2 rounded-xl" id="tour-target-title">
+                    <input type="text" id="project-title-input" class="clean-input text-3xl font-bold w-full" placeholder="Título de la Novela..." onblur="updateProjectTitle(this.value)">
+                    <p class="text-xs text-[var(--text-muted)] mt-1"><i class="fas fa-info-circle"></i> Haz clic en el título para editarlo. Todo se guarda automáticamente.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div onclick="openSection('core')" id="tour-target-core" class="card card-hover p-6 rounded-3xl cursor-pointer flex flex-col justify-between h-52 group">
+                    <div class="flex items-start justify-between">
+                        <div class="w-14 h-14 rounded-2xl bg-[var(--primary)] bg-opacity-10 text-[var(--primary)] flex items-center justify-center text-2xl group-hover:scale-110 transition-transform"><i class="fas fa-seedling"></i></div>
+                        <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">01</span>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-xl">El Núcleo</h3>
+                        <p class="text-sm text-[var(--text-muted)] mt-1 line-clamp-2">Premisa, Tema, Final proyectado y Stakes.</p>
+                    </div>
+                </div>
+
+                <div onclick="openCharactersSection()" class="card card-hover p-6 rounded-3xl cursor-pointer flex flex-col justify-between h-52 group border-l-4 border-l-[var(--primary)]">
+                    <div class="flex items-start justify-between">
+                        <div class="w-14 h-14 rounded-2xl bg-[var(--primary)] bg-opacity-10 text-[var(--primary)] flex items-center justify-center text-2xl group-hover:scale-110 transition-transform"><i class="fas fa-users"></i></div>
+                        <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">02</span>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-xl">Personajes</h3>
+                        <p class="text-sm text-[var(--text-muted)] mt-1 line-clamp-2">Fichas múltiples: Deseo, Necesidad, Notas.</p>
+                    </div>
+                </div>
+
+                <div onclick="openSection('world')" class="card card-hover p-6 rounded-3xl cursor-pointer flex flex-col justify-between h-52 group">
+                    <div class="flex items-start justify-between">
+                        <div class="w-14 h-14 rounded-2xl bg-[var(--primary)] bg-opacity-10 text-[var(--primary)] flex items-center justify-center text-2xl group-hover:scale-110 transition-transform"><i class="fas fa-globe-europe"></i></div>
+                        <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">03</span>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-xl">El Mundo y Voz</h3>
+                        <p class="text-sm text-[var(--text-muted)] mt-1 line-clamp-2">Worldbuilding, POV, Tono y Atmósfera.</p>
+                    </div>
+                </div>
+
+                <div onclick="openSection('structure')" class="card card-hover p-6 rounded-3xl cursor-pointer flex flex-col justify-between h-52 group">
+                    <div class="flex items-start justify-between">
+                        <div class="w-14 h-14 rounded-2xl bg-[var(--primary)] bg-opacity-10 text-[var(--primary)] flex items-center justify-center text-2xl group-hover:scale-110 transition-transform"><i class="fas fa-project-diagram"></i></div>
+                        <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">04</span>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-xl">Estructura</h3>
+                        <p class="text-sm text-[var(--text-muted)] mt-1 line-clamp-2">Incidente Incitador, Punto Medio, Clímax.</p>
+                    </div>
+                </div>
+
+                <div onclick="openTimeline()" class="card card-hover p-6 rounded-3xl cursor-pointer flex flex-col justify-between h-52 group border-dashed border-2 relative overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-br from-[var(--bg-main)] to-[var(--bg-card)] opacity-50 z-0"></div>
+                    <div class="relative z-10 flex flex-col justify-between h-full">
+                        <div class="flex items-start justify-between">
+                            <div class="w-14 h-14 rounded-2xl bg-[var(--primary)] bg-opacity-20 text-[var(--primary)] flex items-center justify-center text-2xl group-hover:scale-110 transition-transform"><i class="fas fa-stream"></i></div>
+                            <span class="text-xs font-bold text-[var(--primary)] uppercase tracking-wider bg-[var(--primary)] bg-opacity-10 px-3 py-1 rounded-full">Cronología</span>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-xl">Línea Temporal</h3>
+                            <p class="text-sm text-[var(--text-muted)] mt-1">Diseñador con eras y eventos personalizados.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div onclick="openEscribeSection()" class="card card-hover p-6 rounded-3xl cursor-pointer flex flex-col justify-between h-52 group bg-gradient-to-br from-[var(--bg-card)] to-[var(--bg-main)] border-2 border-[var(--primary)] shadow-md hover:shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-4 -bottom-4 opacity-10 text-9xl text-[var(--primary)]"><i class="fas fa-pen-nib"></i></div>
+                    <div class="relative z-10 flex flex-col justify-between h-full">
+                        <div class="flex items-start justify-between">
+                            <div class="w-14 h-14 rounded-2xl bg-[var(--primary)] text-white flex items-center justify-center text-2xl group-hover:scale-110 transition-transform shadow-lg"><i class="fas fa-pen-fancy"></i></div>
+                            <span class="text-xs font-bold text-white uppercase tracking-wider bg-[var(--primary)] px-3 py-1 rounded-full shadow">Redacción</span>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-xl">¡Escribe!</h3>
+                            <p class="text-sm text-[var(--text-muted)] mt-1">Redacta los capítulos de tu novela consultando todo tu material.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-section" class="view hidden">
+            <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <button onclick="navigate('project')" class="text-[var(--text-muted)] hover:text-[var(--primary)] p-3 rounded-xl card card-hover"><i class="fas fa-arrow-left"></i></button>
+                    <h2 class="text-2xl sm:text-3xl font-bold capitalize" id="section-title">Sección</h2>
+                </div>
+                <button onclick="openModal('references')" class="btn-primary px-5 py-2.5 rounded-xl font-bold shadow-lg flex items-center gap-2 text-sm">
+                    <i class="fas fa-binoculars"></i> <span>Abrir Referencias</span>
+                </button>
+            </div>
+            <div id="section-editor-container" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
+        </section>
+
+        <!-- VISTA: ¡ESCRIBE! -->
+        <section id="view-escribe" class="view hidden">
+            <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <button onclick="navigate('project')" class="text-[var(--text-muted)] hover:text-[var(--primary)] p-3 rounded-xl card card-hover"><i class="fas fa-arrow-left"></i></button>
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-bold">Borrador de Capítulos</h2>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button id="tour-target-refs" onclick="openModal('references')" class="card hover:border-[var(--primary)] px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2"><i class="fas fa-binoculars text-[var(--primary)]"></i> Referencias</button>
+                    <button onclick="createNewChapter()" class="btn-primary px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow"><i class="fas fa-plus"></i> Nuevo Capítulo</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start min-h-[calc(100vh-220px)]">
+                <div class="lg:col-span-3 flex flex-col gap-3 max-h-[75vh] overflow-y-auto pr-2 sticky top-24" id="chapters-list-container"></div>
+                <div class="lg:col-span-9 w-full" id="chapter-editor-container"></div>
+            </div>
+        </section>
+
+        <section id="view-characters" class="view hidden">
+            <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <button onclick="navigate('project')" class="text-[var(--text-muted)] hover:text-[var(--primary)] p-3 rounded-xl card card-hover"><i class="fas fa-arrow-left"></i></button>
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-bold">Fichas de Personajes</h2>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
+                    <button id="tour-target-minigame" onclick="openMinigameModal()" class="card hover:border-[var(--primary)] hover:text-[var(--primary)] px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-colors border-2 border-[var(--border-color)]">
+                        <i class="fas fa-gamepad"></i> ¿Conoces a tus personajes?
+                    </button>
+                    <button onclick="openModal('references')" class="card hover:border-[var(--primary)] px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2"><i class="fas fa-binoculars text-[var(--primary)]"></i> Referencias</button>
+                    <button onclick="createNewCharacter()" class="btn-primary px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 shadow"><i class="fas fa-user-plus"></i> Nuevo</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                <div class="lg:col-span-4 flex flex-col gap-3 max-h-[75vh] overflow-y-auto pr-2" id="characters-list-container"></div>
+                <div class="lg:col-span-8" id="character-editor-container"></div>
+            </div>
+        </section>
+
+        <section id="view-timeline" class="view hidden">
+            <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <button onclick="navigate('project')" class="text-[var(--text-muted)] hover:text-[var(--primary)] p-3 rounded-xl card card-hover"><i class="fas fa-arrow-left"></i></button>
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-bold">Cronología Custom</h2>
+                        <p class="text-sm text-[var(--text-muted)]">Eventos espaciados proporcionalmente.</p>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="openModal('references')" class="card hover:border-[var(--primary)] px-4 py-2.5 rounded-xl font-bold shadow-sm flex items-center gap-2 text-sm">
+                        <i class="fas fa-binoculars text-[var(--primary)]"></i> Referencias
+                    </button>
+                    <button id="tour-target-event" onclick="openTimelineEventModal()" class="btn-primary px-5 py-2.5 rounded-xl font-bold shadow-lg flex items-center gap-2 text-sm">
+                        <i class="fas fa-calendar-plus"></i> Añadir Evento
+                    </button>
+                </div>
+            </div>
+            <div id="timeline-eras-container" class="space-y-12 pb-16"></div>
+            <div id="empty-timeline-msg" class="text-center py-20 hidden card rounded-2xl border-dashed">
+                <i class="fas fa-stream text-6xl mb-4 opacity-40 text-[var(--text-muted)]"></i>
+                <p class="text-xl font-bold">La línea temporal está vacía.</p>
+            </div>
+        </section>
+    </main>
+
+    
+    <!-- Modal Settings -->
+    <div id="modal-settings" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-[var(--modal-overlay)] backdrop-blur-sm" onclick="closeModal('settings')"></div>
+        <div class="card rounded-3xl shadow-2xl relative z-10 w-full max-w-md p-8 transform transition-all">
+            <div class="flex justify-between items-center mb-6 border-b border-[var(--border-color)] pb-3">
+                <h2 class="text-2xl font-bold flex items-center gap-2"><i class="fas fa-palette text-[var(--primary)]"></i> Ajustes</h2>
+                <button onclick="closeModal('settings')" class="text-[var(--text-muted)] hover:text-red-500 text-2xl">&times;</button>
+            </div>
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider mb-3 text-[var(--text-muted)]">Esquema de Color</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="changeTheme('light')" class="p-3 border rounded-xl hover:border-[var(--primary)] flex items-center gap-3 text-sm font-semibold transition-colors"><div class="w-5 h-5 rounded-full bg-gray-100 border shadow-sm"></div> Clásico</button>
+                        <button onclick="changeTheme('dark')" class="p-3 border rounded-xl hover:border-[var(--primary)] flex items-center gap-3 text-sm font-semibold transition-colors"><div class="w-5 h-5 rounded-full bg-gray-900 shadow-sm"></div> Oscuro</button>
+                        <button onclick="changeTheme('paper')" class="p-3 border rounded-xl hover:border-[var(--primary)] flex items-center gap-3 text-sm font-semibold transition-colors"><div class="w-5 h-5 rounded-full bg-[#eaddcf] shadow-sm"></div> Papel</button>
+                        <button onclick="changeTheme('kawaii')" class="p-3 border rounded-xl hover:border-[var(--primary)] flex items-center gap-3 text-sm font-semibold transition-colors"><div class="w-5 h-5 rounded-full bg-[#ffe5ec] shadow-sm"></div> Kawaii 🌸</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider mb-3 text-[var(--text-muted)]">Tipografía</label>
+                    <div class="grid grid-cols-1 gap-2">
+                        <button onclick="changeFont('sans')" class="p-4 border rounded-xl hover:border-[var(--primary)] text-left font-sans text-sm font-bold transition-colors">Inter (Limpia y moderna)</button>
+                        <button onclick="changeFont('serif')" class="p-4 border rounded-xl hover:border-[var(--primary)] text-left font-serif text-sm font-bold transition-colors">Merriweather (Estilo Novela)</button>
+                        <button onclick="changeFont('cursive')" class="p-4 border rounded-xl hover:border-[var(--primary)] text-left text-lg font-bold transition-colors" style="font-family: 'Caveat', cursive;">Caveat (Escritura manual)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Exportación -->
+    <div id="modal-export" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-[var(--modal-overlay)] backdrop-blur-sm" onclick="closeModal('export')"></div>
+        <div class="card rounded-3xl shadow-2xl relative z-10 w-full max-w-md p-8 transform transition-all">
+            <div class="flex justify-between items-center mb-4 border-b border-[var(--border-color)] pb-3">
+                <h2 class="text-2xl font-bold flex items-center gap-2"><i class="fas fa-file-export text-[var(--primary)]"></i> Exportar a TXT</h2>
+                <button onclick="closeModal('export')" class="text-[var(--text-muted)] hover:text-red-500 text-2xl">&times;</button>
+            </div>
+            <p class="text-sm text-[var(--text-muted)] mb-5">Selecciona qué partes de este proyecto deseas incluir en el archivo de exportación:</p>
+            <div class="space-y-3 mb-8">
+                <label class="flex items-center gap-3 cursor-pointer p-3 border border-[var(--border-color)] rounded-xl hover:bg-[var(--bg-main)] transition-colors">
+                    <input type="checkbox" id="exp-chapters" checked class="w-5 h-5 accent-[var(--primary)]">
+                    <span class="font-bold flex-1"><i class="fas fa-pen-fancy text-[var(--primary)] w-6 text-center"></i> Manuscrito (Capítulos)</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer p-3 border border-[var(--border-color)] rounded-xl hover:bg-[var(--bg-main)] transition-colors">
+                    <input type="checkbox" id="exp-core" checked class="w-5 h-5 accent-[var(--primary)]">
+                    <span class="font-bold flex-1"><i class="fas fa-seedling text-[var(--primary)] w-6 text-center"></i> El Núcleo</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer p-3 border border-[var(--border-color)] rounded-xl hover:bg-[var(--bg-main)] transition-colors">
+                    <input type="checkbox" id="exp-chars" checked class="w-5 h-5 accent-[var(--primary)]">
+                    <span class="font-bold flex-1"><i class="fas fa-users text-[var(--primary)] w-6 text-center"></i> Personajes</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer p-3 border border-[var(--border-color)] rounded-xl hover:bg-[var(--bg-main)] transition-colors">
+                    <input type="checkbox" id="exp-world" checked class="w-5 h-5 accent-[var(--primary)]">
+                    <span class="font-bold flex-1"><i class="fas fa-globe-europe text-[var(--primary)] w-6 text-center"></i> El Mundo y Voz</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer p-3 border border-[var(--border-color)] rounded-xl hover:bg-[var(--bg-main)] transition-colors">
+                    <input type="checkbox" id="exp-struct" checked class="w-5 h-5 accent-[var(--primary)]">
+                    <span class="font-bold flex-1"><i class="fas fa-project-diagram text-[var(--primary)] w-6 text-center"></i> Estructura</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer p-3 border border-[var(--border-color)] rounded-xl hover:bg-[var(--bg-main)] transition-colors">
+                    <input type="checkbox" id="exp-timeline" checked class="w-5 h-5 accent-[var(--primary)]">
+                    <span class="font-bold flex-1"><i class="fas fa-stream text-[var(--primary)] w-6 text-center"></i> Cronología</span>
+                </label>
+            </div>
+            <div class="flex gap-3 justify-end">
+                <button onclick="closeModal('export')" class="px-5 py-2.5 rounded-xl text-[var(--text-muted)] font-bold text-sm hover:bg-[var(--bg-main)] transition-colors">Cancelar</button>
+                <button onclick="executeExport()" class="btn-primary px-6 py-2.5 rounded-xl font-bold text-sm shadow-lg flex items-center gap-2"><i class="fas fa-download"></i> Descargar TXT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmación de Salida de la App -->
+    <div id="modal-exit" class="fixed inset-0 z-[110] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-[var(--modal-overlay)] backdrop-blur-sm" onclick="closeModal('exit')"></div>
+        <div class="card rounded-3xl shadow-2xl relative z-10 w-full max-w-sm p-6 text-center">
+            <div class="text-5xl mb-3 text-[var(--primary)]"><i class="fas fa-sign-out-alt"></i></div>
+            <h3 class="text-xl font-bold mb-2">¿Quieres salir?</h3>
+            <p class="text-sm text-[var(--text-muted)] mb-6">Tus datos están guardados localmente. Si continúas, saldrás de ¡Escribe!</p>
+            <div class="flex gap-3 justify-center">
+                <button onclick="closeModal('exit')" class="px-5 py-2.5 rounded-xl border border-[var(--border-color)] font-bold text-sm flex-1 hover:bg-[var(--bg-main)] transition-colors">Permanecer</button>
+                <button onclick="confirmExitApp()" class="btn-primary px-5 py-2.5 rounded-xl font-bold text-sm flex-1 shadow">Salir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal References (Acordeón) -->
+    <div id="modal-references" class="fixed inset-0 z-[90] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-[var(--modal-overlay)] backdrop-blur-sm" onclick="closeModal('references')"></div>
+        <div class="card rounded-3xl shadow-2xl relative z-10 w-full max-w-3xl p-6 h-[85vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-[var(--border-color)]">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-[var(--primary)] bg-opacity-10 rounded-xl"><i class="fas fa-layer-group text-[var(--primary)] text-xl"></i></div>
+                    <div>
+                        <h2 class="text-2xl font-bold">Referencias del Proyecto</h2>
+                        <p class="text-xs text-[var(--text-muted)]">Consulta tus notas y estructuración rápidamente.</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('references')" class="text-[var(--text-muted)] hover:text-red-500 text-3xl px-2 transition-colors">&times;</button>
+            </div>
+            <div class="flex-1 overflow-y-auto pr-2" id="references-content"></div>
+        </div>
+    </div>
+
+    <!-- Modal Timeline Event -->
+    <div id="modal-timeline-event" class="fixed inset-0 z-[90] hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="absolute inset-0 bg-[var(--modal-overlay)] backdrop-blur-sm" onclick="closeModal('timeline-event')"></div>
+        <div class="card rounded-3xl shadow-2xl relative z-10 w-full max-w-lg p-6 sm:p-8 my-8">
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2 border-b border-[var(--border-color)] pb-3" id="timeline-modal-title"><i class="fas fa-calendar-alt text-[var(--primary)]"></i> Crear Evento</h2>
+            <input type="hidden" id="ev-id">
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider mb-2">Título del Evento <span class="text-red-500">*</span></label>
+                    <input type="text" id="ev-title" class="w-full p-3 rounded-xl font-bold text-lg" placeholder="Ej. La Batalla Final">
+                </div>
+                <div class="bg-[var(--primary)] bg-opacity-5 p-4 rounded-2xl border border-[var(--primary)] border-opacity-20">
+                    <label class="block text-xs font-bold uppercase tracking-wider mb-3 text-[var(--primary)]">Coordenadas Temporales Relativas</label>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        <div class="col-span-2 sm:col-span-3">
+                            <label class="block text-xs font-semibold mb-1 text-[var(--text-muted)]">Era / Edad (Texto)</label>
+                            <input type="text" id="ev-era" class="w-full p-2.5 rounded-lg text-sm font-semibold" placeholder="Ej. Era Oscura, Tercera Edad..." value="Principal">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold mb-1 text-[var(--text-muted)]">Año (Núm)</label>
+                            <input type="number" id="ev-year" class="w-full p-2.5 rounded-lg text-sm" placeholder="Ej. 1024" value="0">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold mb-1 text-[var(--text-muted)]">Mes (Núm)</label>
+                            <input type="number" id="ev-month" class="w-full p-2.5 rounded-lg text-sm" placeholder="Opcional">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold mb-1 text-[var(--text-muted)]">Día (Núm)</label>
+                            <input type="number" id="ev-day" class="w-full p-2.5 rounded-lg text-sm" placeholder="Opcional">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold mb-1 text-[var(--text-muted)]">Hora (Núm)</label>
+                            <input type="number" id="ev-hour" class="w-full p-2.5 rounded-lg text-sm" placeholder="Opcional">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold mb-1 text-[var(--text-muted)]">Minuto (Núm)</label>
+                            <input type="number" id="ev-minute" class="w-full p-2.5 rounded-lg text-sm" placeholder="Opcional">
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider mb-2">Descripción</label>
+                    <textarea id="ev-desc" class="auto-expand p-3 rounded-xl text-sm leading-relaxed min-h-[100px]" placeholder="Detalles del evento..."></textarea>
+                </div>
+            </div>
+            <div class="mt-8 flex justify-between items-center">
+                <button type="button" id="btn-delete-ev" onclick="deleteTimelineEvent()" class="text-red-500 hover:bg-red-50 px-4 py-2 rounded-xl font-bold text-sm hidden transition-colors"><i class="fas fa-trash-alt"></i> Borrar</button>
+                <div class="flex gap-3 ml-auto">
+                    <button onclick="closeModal('timeline-event')" class="px-5 py-2.5 rounded-xl text-[var(--text-muted)] font-bold text-sm hover:bg-[var(--border-color)]">Cancelar</button>
+                    <button onclick="saveTimelineEvent()" class="btn-primary px-6 py-2.5 rounded-xl font-bold text-sm shadow-lg">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Minijuego Personajes -->
+    <div id="modal-minigame" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-[var(--modal-overlay)] backdrop-blur-sm" onclick="closeModal('minigame')"></div>
+        <div class="card rounded-3xl shadow-2xl relative z-10 w-full max-w-lg p-6 sm:p-8 transform transition-all text-center flex flex-col items-center">
+            
+            <div id="minigame-intro" class="w-full">
+                <div class="text-6xl mb-4">🎮</div>
+                <h2 class="text-2xl font-bold mb-2">¿Conoces a tus personajes?</h2>
+                <p class="text-[var(--text-muted)] text-sm mb-6 leading-relaxed">
+                    Este minijuego te lanzará preguntas profundas y aleatorias sobre tus personajes. 
+                    Su objetivo es hacerte reflexionar sobre su personalidad, su trasfondo y sus motivaciones. 
+                    ¿Te has hecho las preguntas correctas como escritor? ¡Vamos a comprobarlo!
+                </p>
+                <button onclick="startMinigame()" class="btn-primary px-8 py-3 rounded-xl font-bold shadow-lg w-full text-lg">¡Empezar el Reto!</button>
+                <button onclick="closeModal('minigame')" class="mt-4 text-[var(--text-muted)] text-sm hover:underline">Quizás en otro momento</button>
+            </div>
+
+            <div id="minigame-play" class="w-full hidden text-left">
+                <button onclick="closeModal('minigame')" class="absolute top-4 right-4 text-[var(--text-muted)] hover:text-red-500 text-2xl">&times;</button>
+                
+                <div class="mb-4">
+                    <span id="mg-char-name" class="inline-block bg-[var(--primary)] text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm">Nombre PJ</span>
+                </div>
+                
+                <h3 id="mg-question" class="text-xl sm:text-2xl font-bold mb-8 italic font-serif leading-relaxed text-center">¿Pregunta?</h3>
+                
+                <div class="flex gap-4 w-full mb-6">
+                    <button onclick="answerMinigame('think')" class="flex-1 py-3 rounded-xl border-2 border-[var(--border-color)] text-[var(--text-muted)] hover:bg-[var(--bg-main)] font-bold text-sm transition-colors text-center">Lo pensaré mejor</button>
+                    <button onclick="answerMinigame('know')" class="flex-1 py-3 rounded-xl border-2 border-[var(--primary)] bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] font-bold text-sm transition-colors shadow-md text-center">¡Lo sé!</button>
+                </div>
+
+                <textarea id="mg-answer" class="w-full p-4 rounded-xl border border-[var(--border-color)] bg-[var(--bg-main)] text-sm leading-relaxed resize-none h-28 focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] outline-none" placeholder="(Opcional) Si has reflexionado una respuesta, puedes anotarla aquí. Se guardará automáticamente al pulsar un botón arriba..."></textarea>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Overlay y Popover de Recorrido Guiado Interactivo (MEJORADO) -->
+    <div id="tour-overlay" class="fixed inset-0 z-[10000] bg-black/10 hidden transition-opacity duration-300 pointer-events-auto" onclick="endGuidedTour()"></div>
+
+    <div id="tour-popover" class="fixed z-[10002] card p-4 rounded-2xl shadow-2xl w-[260px] sm:w-[280px] hidden transition-all duration-200 border-2 border-[var(--primary)] text-left">
+        <div class="flex justify-between items-center mb-2">
+            <span id="tour-pop-step" class="text-[10px] font-bold uppercase tracking-wider text-[var(--primary)] bg-[var(--primary)] bg-opacity-10 px-2 py-0.5 rounded-full">1 / 8</span>
+            <button onclick="endGuidedTour()" class="text-[var(--text-muted)] hover:text-red-500 text-xs font-bold transition-colors">Cerrar</button>
+        </div>
+        <h3 id="tour-pop-title" class="text-[15px] font-bold mb-1"></h3>
+        <p id="tour-pop-text" class="text-[12px] text-[var(--text-muted)] leading-relaxed mb-4"></p>
+        <div class="flex justify-between items-center gap-2 pt-2 border-t border-[var(--border-color)]">
+            <button id="tour-pop-prev" onclick="prevTourStep()" class="text-[11px] font-bold text-[var(--text-muted)] hover:text-[var(--primary)] px-2.5 py-1.5 rounded-lg border border-[var(--border-color)] transition-colors">
+                <i class="fas fa-arrow-left mr-1"></i> Atrás
+            </button>
+            <button id="tour-pop-next" onclick="nextTourStep()" class="btn-primary px-3.5 py-1.5 rounded-lg text-[11px] font-bold shadow ml-auto flex items-center gap-1">
+                Siguiente <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ESTADO GLOBAL DE LA APP Y NAVEGACIÓN DE HISTORIAL (HTML5 HISTORY)
+        const STORAGE_KEY = 'arquitecto_novelas_data';
+        window.APP_STATE = {
+            projects: [], 
+            activeProjectId: null,
+            activeSectionId: null,
+            activeCharacterId: null,
+            activeChapterId: null,
+            currentView: 'home',
+            settings: { theme: 'light', font: 'sans' }
+        };
+
+        const SECTIONS_META = {
+            core: "El Núcleo", world: "El Mundo y la Voz", structure: "La Estructura"
+        };
+
+        const SECTION_FIELDS = {
+            core: [
+                { id: 'premise', label: 'Premisa', icon: 'fa-seedling', placeholder: '¿De qué trata tu historia en una o dos frases?' },
+                { id: 'theme', label: 'Tema', icon: 'fa-lightbulb', placeholder: '¿Cuál es el mensaje profundo o la lección moral?' },
+                { id: 'stakes', label: 'Riesgos (Stakes)', icon: 'fa-fire', placeholder: '¿Qué pasará si el protagonista fracasa?' },
+                { id: 'ending', label: 'Final Proyectado', icon: 'fa-flag-checkered', placeholder: '¿Hacia dónde se dirige la historia?' },
+                { id: 'brainstorming', label: 'Lluvia de Ideas', icon: 'fa-bolt', placeholder: 'Ideas sueltas...' },
+                { id: 'notes', label: 'Notas Generales', icon: 'fa-check-circle', placeholder: 'Anotaciones adicionales...' }
+            ],
+            world: [
+                { id: 'worldbuilding', label: 'Worldbuilding', icon: 'fa-globe', placeholder: '¿Cómo es el mundo de la historia?' },
+                { id: 'pov', label: 'Punto de Vista (POV)', icon: 'fa-eye', placeholder: '¿Quién narra la historia?' },
+                { id: 'tone', label: 'Tono y Atmósfera', icon: 'fa-cloud-moon', placeholder: '¿Qué emociones quieres evocar?' },
+                { id: 'brainstorming', label: 'Lluvia de Ideas', icon: 'fa-bolt', placeholder: 'Ideas sueltas...' },
+                { id: 'notes', label: 'Notas Generales', icon: 'fa-check-circle', placeholder: 'Anotaciones adicionales...' }
+            ],
+            structure: [
+                { id: 'inciting_incident', label: 'Incidente Incitador', icon: 'fa-exclamation-triangle', placeholder: '¿Qué evento inesperado saca al protagonista de su zona de confort?' },
+                { id: 'midpoint', label: 'Punto Medio', icon: 'fa-balance-scale', placeholder: '¿Qué gran revelación o giro ocurre a la mitad?' },
+                { id: 'climax', label: 'Clímax', icon: 'fa-mountain', placeholder: '¿Cuál es la batalla final o el momento de mayor tensión?' },
+                { id: 'acts', label: 'Resumen de 3 Actos', icon: 'fa-scroll', placeholder: 'Planteamiento, Nudo y Desenlace.' },
+                { id: 'brainstorming', label: 'Lluvia de Ideas', icon: 'fa-bolt', placeholder: 'Ideas sueltas...' },
+                { id: 'notes', label: 'Notas Generales', icon: 'fa-check-circle', placeholder: 'Anotaciones adicionales...' }
+            ]
+        };
+
+        const MINIGAME_QUESTIONS = [
+            "¿Cuál es el mayor miedo irracional de este personaje?",
+            "Si encontrara una cartera llena de dinero en la calle, ¿qué haría sin pensarlo?",
+            "¿Qué secreto se llevaría a la tumba antes de confesarlo?",
+            "¿Cuál es su recuerdo más doloroso de la infancia?",
+            "¿Cómo reacciona físicamente cuando alguien le miente en la cara?",
+            "¿Qué cualidad es la que más envidia de otras personas?",
+            "Si tuviera que sacrificar a alguien que ama por un bien mayor, ¿lo haría?",
+            "¿Qué pequeña molestia cotidiana le saca de quicio rápidamente?",
+            "¿Cuál es su concepto de la felicidad y la paz absoluta?",
+            "¿A quién acude cuando siente que su mundo se desmorona?",
+            "¿Qué mentira se cuenta a sí mismo todos los días para poder seguir adelante?",
+            "¿Cuál es su mayor arrepentimiento hasta la fecha?",
+            "¿Qué tipo de broma le hace reír a carcajadas sin poder evitarlo?",
+            "¿Cómo se comporta cuando está totalmente a solas y nadie le observa?",
+            "¿Qué objeto material salvaría primero en un incendio?",
+            "¿Qué es lo peor que podrían decirle para destrozar su autoestima?"
+        ];
+
+        // CONFIGURACIÓN DEL RECORRIDO GUIADO INTERACTIVO
+        const INTERACTIVE_TOUR_STEPS = [
+            {
+                view: 'home',
+                targetSelector: '#tour-target-newproj',
+                title: 'Mis Proyectos',
+                text: 'Bienvenido. Aquí verás todas tus obras guardadas. Usa este botón cuando quieras crear una nueva novela.',
+                prepare: () => {
+                    if (!window.APP_STATE.projects || window.APP_STATE.projects.length === 0) {
+                        const demoProj = {
+                            id: 'proj_demo',
+                            title: "Mi Novela Demo", 
+                            updatedAt: Date.now(),
+                            sections: { core: { premise: "Un escritor descubre un portal en su máquina de escribir..." }, world: {}, structure: {} },
+                            characters: [{ id: 'c1', name: 'Elena', role: 'Protagonista', desire: 'Desvelar la verdad', need: 'Aceptar el pasado' }],
+                            timelineEvents: [{ id: 'e1', title: 'El Descubrimiento', era: 'Principal', year: '2026', desc: 'Encuentra el manuscrito antiguo.' }],
+                            chapters: [{ id: 'ch1', title: 'Capítulo 1: El Comienzo', content: 'La noche era fría y la lluvia golpeaba con fuerza los cristales del despacho...' }] 
+                        };
+                        window.APP_STATE.projects.push(demoProj);
+                        window.APP_STATE.activeProjectId = demoProj.id;
+                        saveData();
+                    } else {
+                        window.APP_STATE.activeProjectId = window.APP_STATE.projects[0].id;
+                    }
+                }
+            },
+            {
+                view: 'project',
+                targetSelector: '#tour-target-title',
+                title: 'Título del Proyecto',
+                text: 'Haz clic en el título de la obra para editarlo en cualquier momento. ¡Todo se guarda solo!'
+            },
+            {
+                view: 'project',
+                targetSelector: '#tour-target-core',
+                title: '01. El Núcleo',
+                text: 'Define la Premisa, el Tema, los Riesgos y el Final. Será la brújula narrative que guíe tu historia.'
+            },
+            {
+                view: 'characters',
+                targetSelector: '#tour-target-minigame',
+                title: 'Personajes y Minijuego',
+                text: 'Crea fichas completas y atrévete a jugar a este minijuego. Te lanzará preguntas para conocerlos a fondo.'
+            },
+            {
+                view: 'timeline',
+                targetSelector: '#tour-target-event',
+                title: '05. Cronología',
+                text: 'Pulsa aquí para añadir eventos. Se organizarán visualmente por Eras y espaciados matemáticamente.'
+            },
+            {
+                view: 'escribe',
+                targetSelector: '#word-counter',
+                title: '06. Manuscrito y Contador',
+                text: 'Aquí verás el contador de palabras de tu capítulo en vivo. ¡A escribir sin límites!'
+            },
+            {
+                view: 'escribe',
+                targetSelector: '#tour-target-refs',
+                title: 'Buscador de Referencias',
+                text: 'Este botón abre un panel con tus notas, fichas y trama sin tener que abandonar el editor de texto.'
+            },
+            {
+                view: 'home',
+                targetSelector: '#main-menu-btn',
+                title: 'Menú Principal',
+                text: 'Desde aquí podrás exportar tu novela a TXT, personalizar los colores, o repetir este tour.'
+            }
+        ];
+
+        let activeTourIndex = 0;
+
+        window.startGuidedTour = function() {
+            document.getElementById('main-menu-dropdown').classList.add('hidden');
+            activeTourIndex = 0;
+            document.getElementById('tour-overlay').classList.remove('hidden');
+            document.getElementById('tour-popover').classList.remove('hidden');
+            window.showTourStep(activeTourIndex);
+        };
+
+        window.endGuidedTour = function() {
+            document.getElementById('tour-overlay').classList.add('hidden');
+            document.getElementById('tour-popover').classList.add('hidden');
+            clearTourHighlights();
+        };
+
+        function clearTourHighlights() {
+            document.querySelectorAll('.tour-active-highlight').forEach(el => {
+                el.classList.remove('tour-active-highlight');
+            });
+        }
+
+        window.showTourStep = function(index) {
+            clearTourHighlights();
+            const step = INTERACTIVE_TOUR_STEPS[index];
+            if (!step) return;
+
+            if (step.prepare) step.prepare();
+
+            window.navigate(step.view, false);
+
+            setTimeout(() => {
+                const targetEl = document.querySelector(step.targetSelector);
+                const popover = document.getElementById('tour-popover');
+                
+                document.getElementById('tour-pop-title').textContent = step.title;
+                document.getElementById('tour-pop-text').textContent = step.text;
+                document.getElementById('tour-pop-step').textContent = `${index + 1} / ${INTERACTIVE_TOUR_STEPS.length}`;
+
+                const prevBtn = document.getElementById('tour-pop-prev');
+                const nextBtn = document.getElementById('tour-pop-next');
+
+                if (index === 0) {
+                    prevBtn.style.display = 'none';
+                } else {
+                    prevBtn.style.display = 'inline-flex';
+                }
+
+                if (index === INTERACTIVE_TOUR_STEPS.length - 1) {
+                    nextBtn.innerHTML = '¡A escribir! <i class="fas fa-check ml-1"></i>';
+                } else {
+                    nextBtn.innerHTML = 'Siguiente <i class="fas fa-arrow-right ml-1"></i>';
+                }
+
+                popover.classList.remove('arrow-top', 'arrow-bottom');
+                popover.style.top = '-9999px';
+                popover.style.left = '-9999px';
+
+                if (targetEl) {
+                    targetEl.classList.add('tour-active-highlight');
+                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+
+                    setTimeout(() => {
+                        const rect = targetEl.getBoundingClientRect();
+                        const popWidth = popover.offsetWidth || 280;
+                        const popHeight = popover.offsetHeight || 150;
+
+                        const spaceAbove = rect.top;
+                        const spaceBelow = window.innerHeight - rect.bottom;
+                        
+                        let top, arrowDirection;
+
+                        if (spaceBelow >= popHeight + 20 || spaceBelow > spaceAbove) {
+                            top = rect.bottom + 14;
+                            arrowDirection = 'arrow-top';
+                        } else {
+                            top = rect.top - popHeight - 14;
+                            arrowDirection = 'arrow-bottom';
+                        }
+
+                        if (top < 10) { 
+                            top = 10; 
+                            arrowDirection = 'arrow-top'; 
+                        }
+                        if (top + popHeight > window.innerHeight - 10) { 
+                            top = window.innerHeight - popHeight - 10; 
+                            arrowDirection = 'arrow-bottom'; 
+                        }
+
+                        let targetCenter = rect.left + (rect.width / 2);
+                        let left = targetCenter - (popWidth / 2);
+
+                        if (left + popWidth > window.innerWidth - 12) {
+                            left = window.innerWidth - popWidth - 12;
+                        }
+                        if (left < 12) left = 12;
+
+                        let arrowLeft = targetCenter - left;
+                        arrowLeft = Math.max(20, Math.min(popWidth - 20, arrowLeft));
+
+                        popover.style.setProperty('--arrow-left', `${arrowLeft}px`);
+                        popover.classList.add(arrowDirection);
+
+                        popover.style.top = `${top}px`;
+                        popover.style.left = `${left}px`;
+                        popover.style.transform = 'none';
+
+                    }, 350);
+                } else {
+                    popover.style.top = '50%';
+                    popover.style.left = '50%';
+                    popover.style.transform = 'translate(-50%, -50%)';
+                }
+            }, 50);
+        };
+
+        window.nextTourStep = function() {
+            if (activeTourIndex < INTERACTIVE_TOUR_STEPS.length - 1) {
+                activeTourIndex++;
+                window.showTourStep(activeTourIndex);
+            } else {
+                window.endGuidedTour();
+            }
+        };
+
+        window.prevTourStep = function() {
+            if (activeTourIndex > 0) {
+                activeTourIndex--;
+                window.showTourStep(activeTourIndex);
+            }
+        };
+
+        function loadData() {
+            try {
+                const data = localStorage.getItem(STORAGE_KEY);
+                if(data) {
+                    const parsed = JSON.parse(data);
+                    window.APP_STATE.projects = parsed.projects || [];
+                    window.APP_STATE.settings = parsed.settings || window.APP_STATE.settings;
+                }
+            } catch(e) { console.error("Error cargando datos locales:", e); }
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    projects: window.APP_STATE.projects,
+                    settings: window.APP_STATE.settings
+                }));
+                showSaveIndicator();
+            } catch(e) { console.error("Error guardando:", e); }
+        }
+
+        let saveTimeout;
+        window.debounceSave = function() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(saveData, 800);
+        };
+
+        function showSaveIndicator() {
+            const ind = document.getElementById('save-indicator');
+            if(ind) {
+                ind.style.opacity = "1";
+                setTimeout(() => ind.style.opacity = "0", 1500);
+            }
+        }
+
+        window.showToast = function(msg, type = "info") {
+            const container = document.getElementById('toast-container');
+            const t = document.createElement('div');
+            t.className = `toast shadow-lg ${type}`;
+            t.textContent = msg;
+            container.appendChild(t);
+            setTimeout(() => t.classList.add('show'), 10);
+            setTimeout(() => { t.classList.remove('show'); setTimeout(()=> t.remove(), 300); }, 3000);
+        };
+
+        // --- SISTEMA NAVEGACIÓN Y HISTORIAL ANDROID ---
+        window.navigate = function(viewName, pushState = true) {
+            document.querySelectorAll('.view').forEach(el => el.classList.add('hidden'));
+            const target = document.getElementById(`view-${viewName}`);
+            if (target) target.classList.remove('hidden');
+
+            window.APP_STATE.currentView = viewName;
+
+            if (pushState) {
+                history.pushState({ view: viewName }, '', `#${viewName}`);
+            }
+
+            if (viewName === 'home') window.renderHome();
+            if (viewName === 'project') window.renderProjectDash();
+            if (viewName === 'timeline') window.renderTimeline();
+            if (viewName === 'escribe') window.renderEscribeSection();
+
+            window.triggerAutoExpands();
+            window.scrollTo(0,0);
+        };
+
+        window.addEventListener('popstate', function(e) {
+            const openModals = document.querySelectorAll('[id^="modal-"]:not(.hidden)');
+            if (openModals.length > 0) {
+                openModals.forEach(m => m.classList.add('hidden'));
+                history.pushState({ view: window.APP_STATE.currentView }, '', `#${window.APP_STATE.currentView}`);
+                return;
+            }
+
+            if (e.state && e.state.view) {
+                if (e.state.view === 'home' && window.APP_STATE.currentView === 'home') {
+                    openModal('exit');
+                    history.pushState({ view: 'home' }, '', '#home');
+                } else {
+                    window.navigate(e.state.view, false);
+                }
+            } else {
+                if (window.APP_STATE.currentView === 'home') {
+                    openModal('exit');
+                    history.pushState({ view: 'home' }, '', '#home');
+                } else {
+                    window.navigate('home', false);
+                }
+            }
+        });
+
+        window.confirmExitApp = function() {
+            closeModal('exit');
+            window.history.back();
+        };
+
+        window.openModal = function(id) { 
+            const m = document.getElementById(`modal-${id}`);
+            if(m) { 
+                m.classList.remove('hidden'); 
+                if(id === 'references') window.buildReferences();
+                setTimeout(() => window.triggerAutoExpands(), 50);
+            }
+        };
+
+        window.closeModal = function(id) { 
+            const m = document.getElementById(`modal-${id}`);
+            if(m) m.classList.add('hidden'); 
+        };
+
+        window.toggleMainMenu = function() {
+            document.getElementById('main-menu-dropdown').classList.toggle('hidden');
+        };
+        
+        document.addEventListener('click', function(e) {
+            const btn = document.getElementById('main-menu-btn');
+            const menu = document.getElementById('main-menu-dropdown');
+            if(btn && menu && !btn.contains(e.target) && !menu.contains(e.target)) {
+                menu.classList.add('hidden');
+            }
+        });
+
+        window.openSettingsModal = function() { openModal('settings'); };
+
+        let currentMinigameCharId = null;
+        let currentMinigameQuestion = "";
+
+        window.openMinigameModal = function() {
+            const p = getActiveProject();
+            if(!p || !p.characters || p.characters.length === 0) {
+                window.showToast("Primero debes crear al menos un personaje.", "error");
+                return;
+            }
+            document.getElementById('minigame-intro').classList.remove('hidden');
+            document.getElementById('minigame-play').classList.add('hidden');
+            openModal('minigame');
+        };
+
+        window.startMinigame = function() {
+            document.getElementById('minigame-intro').classList.add('hidden');
+            document.getElementById('minigame-play').classList.remove('hidden');
+            nextMinigameQuestion();
+        };
+
+        window.nextMinigameQuestion = function() {
+            const p = getActiveProject();
+            const randomChar = p.characters[Math.floor(Math.random() * p.characters.length)];
+            currentMinigameCharId = randomChar.id;
+            currentMinigameQuestion = MINIGAME_QUESTIONS[Math.floor(Math.random() * MINIGAME_QUESTIONS.length)];
+            
+            document.getElementById('mg-char-name').textContent = randomChar.name;
+            document.getElementById('mg-question').textContent = currentMinigameQuestion;
+            document.getElementById('mg-answer').value = "";
+        };
+
+        window.answerMinigame = function(type) {
+            const answerText = document.getElementById('mg-answer').value.trim();
+            if (answerText) {
+                const p = getActiveProject();
+                const char = p.characters.find(c => c.id === currentMinigameCharId);
+                if (char) {
+                    const newEntry = `>> Pregunta: ${currentMinigameQuestion}\nRespuesta: ${answerText}\n\n`;
+                    char.minigameAnswers = (char.minigameAnswers || "") + newEntry;
+                    p.updatedAt = Date.now();
+                    debounceSave();
+                    if (window.APP_STATE.activeCharacterId === currentMinigameCharId) {
+                        renderCharactersSection(); 
+                    }
+                }
+            }
+            
+            if (type === 'know') {
+                window.showToast("¡Genial! Tienes claras sus motivaciones.", "success");
+            } else {
+                window.showToast("¡No pasa nada, déjalo macerar en tu cabeza!", "info");
+            }
+
+            nextMinigameQuestion();
+        };
+
+        window.openExportModal = function() {
+            const p = getActiveProject();
+            if (!p) { window.showToast("Debes abrir un proyecto primero para poder exportarlo.", "error"); return; }
+            openModal('export');
+        };
+
+        window.executeExport = function() {
+            const p = getActiveProject();
+            if(!p) return;
+
+            let txt = `========================================================================\n`;
+            txt += `  PROYECTO: ${p.title.toUpperCase()}\n`;
+            txt += `========================================================================\n\n`;
+
+            if (document.getElementById('exp-chapters').checked) {
+                txt += `--- MANUSCRITO (CAPÍTULOS) ---------------------------------------------\n\n`;
+                if (p.chapters && p.chapters.length > 0) {
+                    p.chapters.forEach(c => {
+                        txt += `[ ${c.title.toUpperCase()} ]\n\n`;
+                        txt += c.content ? `${c.content}\n\n` : `(Sin contenido redactado)\n\n`;
+                        txt += `------------------------------------------------------------------------\n\n`;
+                    });
+                } else { txt += `(No hay capítulos creados)\n\n`; }
+            }
+
+            const printSectionTXT = (chkId, secKey, title) => {
+                if (document.getElementById(chkId).checked) {
+                    txt += `--- ${title.toUpperCase()} -----------------------------------------------------\n\n`;
+                    if (p.sections && p.sections[secKey]) {
+                        let hasContent = false;
+                        (SECTION_FIELDS[secKey] || []).forEach(f => {
+                            if(p.sections[secKey][f.id] && p.sections[secKey][f.id].trim() !== '') {
+                                txt += `>> ${f.label}:\n${p.sections[secKey][f.id]}\n\n`;
+                                hasContent = true;
+                            }
+                        });
+                        if(!hasContent) txt += `(Sección vacía)\n\n`;
+                    } else { txt += `(Sección vacía)\n\n`; }
+                }
+            };
+
+            printSectionTXT('exp-core', 'core', 'El Núcleo');
+
+            if (document.getElementById('exp-chars').checked) {
+                txt += `--- PERSONAJES ---------------------------------------------------------\n\n`;
+                if (p.characters && p.characters.length > 0) {
+                    p.characters.forEach(c => {
+                        txt += `>> NOMBRE: ${c.name}\n`;
+                        txt += `>> ROL: ${c.role}\n`;
+                        if(c.desire && c.desire.trim()) txt += `>> DESEO:\n${c.desire}\n`;
+                        if(c.need && c.need.trim()) txt += `>> NECESIDAD:\n${c.need}\n`;
+                        if(c.appearance && c.appearance.trim()) txt += `>> APARIENCIA:\n${c.appearance}\n`;
+                        if(c.notes && c.notes.trim()) txt += `>> NOTAS / BIO:\n${c.notes}\n`;
+                        if(c.minigameAnswers && c.minigameAnswers.trim()) txt += `>> RESPUESTAS AL MINIJUEGO:\n${c.minigameAnswers}\n`;
+                        txt += `\n- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - \n\n`;
+                    });
+                } else { txt += `(No hay personajes creados)\n\n`; }
+            }
+
+            printSectionTXT('exp-world', 'world', 'El Mundo y Voz');
+            printSectionTXT('exp-struct', 'structure', 'Estructura');
+
+            if (document.getElementById('exp-timeline').checked) {
+                txt += `--- CRONOLOGÍA ---------------------------------------------------------\n\n`;
+                if (p.timelineEvents && p.timelineEvents.length > 0) {
+                    const sortedEvs = [...p.timelineEvents].sort((a,b) => calcAbstractTick(a) - calcAbstractTick(b));
+                    sortedEvs.forEach(ev => {
+                        const timeArr = [];
+                        if(ev.year !== "" && ev.year !== null) timeArr.push(`A${ev.year}`);
+                        if(ev.month !== "" && ev.month !== null) timeArr.push(`M${ev.month}`);
+                        if(ev.day !== "" && ev.day !== null) timeArr.push(`D${ev.day}`);
+                        const timeStr = timeArr.length > 0 ? timeArr.join("-") : "Inicio";
+                        
+                        txt += `[${ev.era} • ${timeStr}] ${ev.title.toUpperCase()}\n`;
+                        if(ev.desc && ev.desc.trim()) txt += `${ev.desc}\n`;
+                        txt += `\n`;
+                    });
+                } else { txt += `(No hay eventos creados)\n\n`; }
+            }
+
+            const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const safeTitle = p.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            a.download = `proyecto_${safeTitle || 'novela'}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            closeModal('export');
+            showToast("Proyecto exportado correctamente", "success");
+        };
+
+        window.changeTheme = function(theme) { window.APP_STATE.settings.theme = theme; applySettings(); saveData(); };
+        window.changeFont = function(font) { window.APP_STATE.settings.font = font; applySettings(); saveData(); };
+        function applySettings() {
+            document.documentElement.setAttribute('data-theme', window.APP_STATE.settings.theme || 'light');
+            document.documentElement.setAttribute('data-font', window.APP_STATE.settings.font || 'sans');
+        }
+
+        function setupAutoExpand() {
+            document.addEventListener('input', function(e) {
+                if (e.target.tagName.toLowerCase() === 'textarea' && e.target.classList.contains('auto-expand')) {
+                    autoExpandNode(e.target);
+                }
+            });
+        }
+        function autoExpandNode(node) { 
+            node.style.height = 'auto'; 
+            node.style.height = (node.scrollHeight) + 'px'; 
+        }
+        window.triggerAutoExpands = function() {
+            setTimeout(() => { document.querySelectorAll('textarea.auto-expand').forEach(el => autoExpandNode(el)); }, 50);
+        };
+
+        function getActiveProject() { return window.APP_STATE.projects.find(p => p.id === window.APP_STATE.activeProjectId); }
+
+        window.createNewProject = function() {
+            const newProj = {
+                id: 'proj_' + Date.now(),
+                title: "Nueva Historia", updatedAt: Date.now(),
+                sections: { core: {}, world: {}, structure: {} },
+                characters: [], timelineEvents: [], chapters: [] 
+            };
+            window.APP_STATE.projects.unshift(newProj);
+            window.APP_STATE.activeProjectId = newProj.id;
+            saveData(); navigate('project');
+        };
+
+        window.renderHome = function() {
+            const grid = document.getElementById('projects-grid');
+            const emptyMsg = document.getElementById('empty-projects-msg');
+            grid.innerHTML = '';
+
+            if(window.APP_STATE.projects.length === 0) {
+                emptyMsg.classList.remove('hidden');
+            } else {
+                emptyMsg.classList.add('hidden');
+                window.APP_STATE.projects.sort((a,b) => b.updatedAt - a.updatedAt);
+
+                window.APP_STATE.projects.forEach(p => {
+                    const dateStr = new Date(p.updatedAt).toLocaleDateString('es-ES', { day:'numeric', month:'short', year:'numeric'});
+                    const card = document.createElement('div');
+                    card.className = "card card-hover p-6 rounded-3xl cursor-pointer flex flex-col justify-between h-52 group relative";
+                    card.onclick = () => { window.APP_STATE.activeProjectId = p.id; window.navigate('project'); };
+                    card.innerHTML = `
+                        <div>
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-xl font-bold truncate pr-6">${escapeHtml(p.title)}</h3>
+                                <button onclick="event.stopPropagation(); window.deleteProject('${p.id}')" class="text-[var(--text-muted)] hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2"><i class="fas fa-trash-alt"></i></button>
+                            </div>
+                            <p class="text-sm text-[var(--text-muted)]"><i class="fas fa-users mr-1"></i> ${(p.characters||[]).length} PJs | <i class="fas fa-pen mr-1 ml-2"></i> ${(p.chapters||[]).length} Caps</p>
+                        </div>
+                        <div class="flex justify-between items-center text-xs font-bold text-[var(--text-muted)] border-t border-[var(--border-color)] pt-4">
+                            <span>Modificado: ${dateStr}</span>
+                            <span class="text-[var(--primary)] group-hover:translate-x-1 transition-transform">Abrir &rarr;</span>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            }
+        };
+
+        window.deleteProject = function(id) {
+            if(!confirm("¿Borrar definitivamente este proyecto?")) return;
+            window.APP_STATE.projects = window.APP_STATE.projects.filter(p => p.id !== id);
+            saveData(); window.renderHome(); window.showToast("Proyecto eliminado", "success");
+        };
+
+        window.renderProjectDash = function() {
+            const p = getActiveProject();
+            if(!p) return;
+            document.getElementById('project-title-input').value = p.title;
+        };
+
+        window.updateProjectTitle = function(val) {
+            const p = getActiveProject();
+            if(p) { p.title = val.trim() || "Sin Título"; p.updatedAt = Date.now(); debounceSave(); }
+        };
+
+        window.openSection = function(secId) {
+            window.APP_STATE.activeSectionId = secId;
+            const p = getActiveProject();
+            if(!p) return;
+            if(!p.sections) p.sections = {};
+            if(!p.sections[secId]) p.sections[secId] = {};
+            
+            document.getElementById('section-title').textContent = SECTIONS_META[secId];
+            const container = document.getElementById('section-editor-container');
+            container.innerHTML = ''; 
+            
+            const fields = SECTION_FIELDS[secId] || [];
+            fields.forEach(field => {
+                const val = p.sections[secId][field.id] || '';
+                const div = document.createElement('div');
+                div.className = 'card rounded-3xl p-6 shadow-sm flex flex-col h-full';
+                if(field.id === 'notes') div.classList.add('border-t-8', 'border-t-[var(--primary)]', 'lg:col-span-2');
+
+                div.innerHTML = `
+                    <h3 class="font-bold text-lg mb-4 flex items-center gap-2 text-[var(--primary)] border-b border-[var(--border-color)] pb-3">
+                        <i class="fas ${field.icon} text-xl"></i> ${field.label}
+                    </h3>
+                    <textarea oninput="window.updateSectionField('${secId}', '${field.id}', this.value)" 
+                              class="auto-expand p-4 rounded-xl text-sm sm:text-base leading-relaxed bg-opacity-50 w-full" 
+                              placeholder="${field.placeholder}">${escapeHtml(val)}</textarea>
+                `;
+                container.appendChild(div);
+            });
+            navigate('section');
+        };
+
+        window.updateSectionField = function(secId, fieldId, val) {
+            const p = getActiveProject();
+            if(p && p.sections[secId]) { p.sections[secId][fieldId] = val; p.updatedAt = Date.now(); debounceSave(); }
+        };
+
+        window.openEscribeSection = function() {
+            const p = getActiveProject();
+            if(!p) return;
+            if(!p.chapters) p.chapters = [];
+            if(p.chapters.length === 0) window.createNewChapter(false);
+            if(!window.APP_STATE.activeChapterId || !p.chapters.find(c => c.id === window.APP_STATE.activeChapterId)) {
+                if(p.chapters.length > 0) window.APP_STATE.activeChapterId = p.chapters[0].id;
+            }
+            navigate('escribe');
+            window.renderEscribeSection();
+        };
+
+        window.createNewChapter = function(render = true) {
+            const p = getActiveProject();
+            if(!p.chapters) p.chapters = [];
+            const newChap = { id: 'chap_' + Date.now(), title: "Capítulo " + (p.chapters.length + 1), content: "" };
+            p.chapters.push(newChap);
+            window.APP_STATE.activeChapterId = newChap.id;
+            p.updatedAt = Date.now(); saveData();
+            if(render) window.renderEscribeSection();
+        };
+
+        window.deleteChapter = function(id) {
+            const p = getActiveProject();
+            if(p.chapters.length <= 1) { window.showToast("Debes tener al menos un capítulo en esta sección.", "error"); return; }
+            if(confirm("¿Borrar capítulo? Perderás todo su contenido escrito.")) {
+                p.chapters = p.chapters.filter(c => c.id !== id);
+                window.APP_STATE.activeChapterId = p.chapters[0].id;
+                p.updatedAt = Date.now(); saveData(); window.renderEscribeSection();
+            }
+        };
+
+        window.renderEscribeSection = function() {
+            const p = getActiveProject();
+            const listDiv = document.getElementById('chapters-list-container');
+            const editDiv = document.getElementById('chapter-editor-container');
+            listDiv.innerHTML = '';
+
+            p.chapters.forEach(c => {
+                const isActive = c.id === window.APP_STATE.activeChapterId;
+                const activeClass = isActive ? 'border-2 border-[var(--primary)] bg-[var(--primary)] bg-opacity-10' : 'hover:border-[var(--primary)]';
+                
+                const d = document.createElement('div');
+                d.className = `card p-4 rounded-2xl cursor-pointer transition-all flex justify-between items-center ${activeClass}`;
+                d.onclick = () => { window.APP_STATE.activeChapterId = c.id; window.renderEscribeSection(); };
+                
+                const snippet = c.content ? c.content.substring(0, 30) + '...' : 'Empezar a escribir...';
+
+                d.innerHTML = `
+                    <div class="overflow-hidden flex-1">
+                        <h4 class="font-bold truncate text-sm">${escapeHtml(c.title)}</h4>
+                        <span class="text-xs text-[var(--text-muted)] font-serif italic line-clamp-1 mt-1">${escapeHtml(snippet)}</span>
+                    </div>
+                    <button onclick="event.stopPropagation(); window.deleteChapter('${c.id}')" class="text-red-500 hover:bg-red-50 p-2 rounded-lg opacity-50 hover:opacity-100 ml-2"><i class="fas fa-trash-alt"></i></button>
+                `;
+                listDiv.appendChild(d);
+            });
+
+            const chap = p.chapters.find(c => c.id === window.APP_STATE.activeChapterId);
+            if(!chap) return;
+
+            const wordCount = chap.content ? chap.content.trim().split(/\s+/).filter(w => w.length > 0).length : 0;
+
+            editDiv.innerHTML = `
+                <div class="card rounded-3xl p-6 sm:p-10 shadow-sm flex flex-col border-t-8 border-t-[var(--primary)] min-h-full">
+                    <div class="flex justify-between items-center mb-6 border-b border-[var(--border-color)] pb-4 gap-4">
+                        <input type="text" value="${escapeHtml(chap.title)}" oninput="window.updateChapter('title', this.value)" class="clean-input w-full text-[var(--text-main)] text-2xl sm:text-3xl font-bold font-serif" placeholder="Nombre del Capítulo">
+                        
+                        <span id="word-counter" class="text-xs sm:text-sm font-bold text-[var(--primary)] bg-[var(--bg-main)] px-3 py-1.5 rounded-xl whitespace-nowrap border border-[var(--border-color)] shadow-sm transition-colors flex items-center gap-2">
+                            <i class="fas fa-pen-nib"></i> <span>${wordCount} ${wordCount === 1 ? 'palabra' : 'palabras'}</span>
+                        </span>
+                    </div>
+                    
+                    <textarea id="main-editor-textarea" oninput="window.updateChapterContent(this)" class="auto-expand w-full flex-1 p-2 rounded-xl text-lg leading-loose font-serif bg-transparent text-[var(--text-main)] resize-none focus:outline-none placeholder:italic placeholder:text-[var(--text-muted)] overflow-hidden" placeholder="Érase una vez...">${escapeHtml(chap.content || '')}</textarea>
+                </div>
+            `;
+            
+            setTimeout(() => {
+                const ta = document.getElementById('main-editor-textarea');
+                if(ta) autoExpandNode(ta);
+            }, 10);
+        };
+
+        window.updateChapterContent = function(el) {
+            const val = el.value;
+            window.updateChapter('content', val);
+            
+            const count = val.trim().split(/\s+/).filter(w => w.length > 0).length;
+            const counterEl = document.getElementById('word-counter');
+            if(counterEl) {
+                counterEl.innerHTML = `<i class="fas fa-pen-nib"></i> <span>${count} ${count === 1 ? 'palabra' : 'palabras'}</span>`;
+            }
+        };
+
+        window.updateChapter = function(field, val) {
+            const p = getActiveProject();
+            const c = p.chapters.find(ch => ch.id === window.APP_STATE.activeChapterId);
+            if(c) {
+                c[field] = val; p.updatedAt = Date.now(); debounceSave();
+                if(field === 'title') {
+                    const activeNode = document.querySelector('#chapters-list-container .border-2 h4');
+                    if(activeNode) activeNode.textContent = val || "Sin título";
+                }
+            }
+        };
+
+        window.openCharactersSection = function() {
+            const p = getActiveProject();
+            if(!p) return;
+            if(!p.characters) p.characters = [];
+            if(p.characters.length === 0) window.createNewCharacter(false);
+            if(!window.APP_STATE.activeCharacterId || !p.characters.find(c => c.id === window.APP_STATE.activeCharacterId)) {
+                if(p.characters.length > 0) window.APP_STATE.activeCharacterId = p.characters[0].id;
+            }
+            navigate('characters');
+            window.renderCharactersSection();
+        };
+
+        window.createNewCharacter = function(render = true) {
+            const p = getActiveProject();
+            const newChar = { id: 'char_' + Date.now(), name: "Nuevo Personaje", role: "Protagonista", desire: "", need: "", appearance: "", notes: "", brainstorming: "", minigameAnswers: "" };
+            p.characters.push(newChar);
+            window.APP_STATE.activeCharacterId = newChar.id;
+            p.updatedAt = Date.now(); saveData();
+            if(render) window.renderCharactersSection();
+        };
+
+        window.deleteCharacter = function(id) {
+            const p = getActiveProject();
+            if(p.characters.length <= 1) { window.showToast("Debes tener al menos un personaje.", "error"); return; }
+            if(confirm("¿Borrar personaje?")) {
+                p.characters = p.characters.filter(c => c.id !== id);
+                window.APP_STATE.activeCharacterId = p.characters[0].id;
+                p.updatedAt = Date.now(); saveData(); window.renderCharactersSection();
+            }
+        };
+
+        window.renderCharactersSection = function() {
+            const p = getActiveProject();
+            const listDiv = document.getElementById('characters-list-container');
+            const editDiv = document.getElementById('character-editor-container');
+            listDiv.innerHTML = '';
+
+            p.characters.forEach(c => {
+                const isActive = c.id === window.APP_STATE.activeCharacterId;
+                const activeClass = isActive ? 'border-2 border-[var(--primary)] bg-[var(--primary)] bg-opacity-10' : 'hover:border-[var(--primary)]';
+                
+                const d = document.createElement('div');
+                d.className = `card p-4 rounded-2xl cursor-pointer transition-all flex justify-between items-center ${activeClass}`;
+                d.onclick = () => { window.APP_STATE.activeCharacterId = c.id; window.renderCharactersSection(); };
+                d.innerHTML = `
+                    <div class="overflow-hidden flex-1">
+                        <h4 class="font-bold truncate">${escapeHtml(c.name)}</h4>
+                        <span class="text-xs text-[var(--text-muted)] bg-[var(--bg-main)] px-2 py-0.5 rounded-full inline-block mt-1 border border-[var(--border-color)]">${escapeHtml(c.role)}</span>
+                    </div>
+                    <button onclick="event.stopPropagation(); window.deleteCharacter('${c.id}')" class="text-red-500 hover:bg-red-50 p-2 rounded-lg opacity-50 hover:opacity-100 ml-2"><i class="fas fa-trash-alt"></i></button>
+                `;
+                listDiv.appendChild(d);
+            });
+
+            const char = p.characters.find(c => c.id === window.APP_STATE.activeCharacterId);
+            if(!char) return;
+
+            editDiv.innerHTML = `
+                <div class="card rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 border-b border-[var(--border-color)] pb-6">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider mb-2">Nombre</label>
+                            <input type="text" value="${escapeHtml(char.name)}" oninput="window.updateChar('name', this.value)" class="w-full p-3 rounded-xl font-bold text-lg">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider mb-2">Rol / Arquetipo</label>
+                            <input type="text" value="${escapeHtml(char.role)}" oninput="window.updateChar('role', this.value)" class="w-full p-3 rounded-xl font-medium">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider mb-2 text-[var(--primary)]">Deseo (Objetivo Externo)</label>
+                            <textarea oninput="window.updateChar('desire', this.value)" class="auto-expand w-full p-3 rounded-xl text-sm leading-relaxed">${escapeHtml(char.desire || '')}</textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider mb-2 text-[var(--primary)]">Necesidad (Arco Interno)</label>
+                            <textarea oninput="window.updateChar('need', this.value)" class="auto-expand w-full p-3 rounded-xl text-sm leading-relaxed">${escapeHtml(char.need || '')}</textarea>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider mb-2"><i class="fas fa-eye text-[var(--primary)]"></i> Apariencia y Rasgos Físicos</label>
+                        <textarea oninput="window.updateChar('appearance', this.value)" class="auto-expand w-full p-3 rounded-xl text-sm leading-relaxed">${escapeHtml(char.appearance || '')}</textarea>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-[var(--border-color)]">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider mb-2"><i class="fas fa-bolt text-[var(--primary)]"></i> Lluvia de ideas</label>
+                            <textarea oninput="window.updateChar('brainstorming', this.value)" class="auto-expand w-full p-3 rounded-xl text-sm leading-relaxed">${escapeHtml(char.brainstorming || '')}</textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider mb-2"><i class="fas fa-check-circle text-[var(--primary)]"></i> Biografía e Historia</label>
+                            <textarea oninput="window.updateChar('notes', this.value)" class="auto-expand w-full p-3 rounded-xl text-sm leading-relaxed font-serif">${escapeHtml(char.notes || '')}</textarea>
+                        </div>
+                        
+                        <div class="md:col-span-2 mt-2">
+                            <label class="block text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-2"><i class="fas fa-gamepad text-[var(--primary)]"></i> Respuestas al Minijuego</label>
+                            <textarea oninput="window.updateChar('minigameAnswers', this.value)" class="auto-expand w-full p-3 rounded-xl text-sm leading-relaxed font-serif bg-[var(--primary)] bg-opacity-5 border border-[var(--primary)] border-opacity-30 placeholder:italic" placeholder="Aquí aparecerán las respuestas del minijuego de conocer a tus personajes...">${escapeHtml(char.minigameAnswers || '')}</textarea>
+                        </div>
+                    </div>
+                </div>
+            `;
+            triggerAutoExpands();
+        };
+
+        window.updateChar = function(field, val) {
+            const p = getActiveProject();
+            const c = p.characters.find(ch => ch.id === window.APP_STATE.activeCharacterId);
+            if(c) {
+                c[field] = val; p.updatedAt = Date.now(); debounceSave();
+                if(field === 'name' || field === 'role') {
+                    const activeNode = document.querySelector('#characters-list-container .border-2');
+                    if(activeNode) {
+                        if(field === 'name') activeNode.querySelector('h4').textContent = val || "Sin nombre";
+                        if(field === 'role') activeNode.querySelector('span').textContent = val || "Sin rol";
+                    }
+                }
+            }
+        };
+
+        function calcAbstractTick(ev) {
+            let y = parseInt(ev.year) || 0;
+            let m = parseInt(ev.month) || 1;
+            let d = parseInt(ev.day) || 1;
+            let h = parseInt(ev.hour) || 0;
+            let min = parseInt(ev.minute) || 0;
+            return (y * 365 * 24 * 60) + (m * 30 * 24 * 60) + (d * 24 * 60) + (h * 60) + min;
+        }
+
+        window.toggleAccordion = function(id) {
+            const content = document.getElementById(id);
+            const icon = document.getElementById('icon-' + id);
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                if(icon) icon.style.transform = 'rotate(180deg)';
+            } else {
+                content.classList.add('hidden');
+                if(icon) icon.style.transform = 'rotate(0deg)';
+            }
+        };
+
+        window.buildReferences = function() {
+            const p = getActiveProject();
+            const cont = document.getElementById('references-content');
+            if(!cont) return;
+            cont.innerHTML = '';
+            
+            let html = '<div class="space-y-4 pb-4">'; 
+
+            const buildAccordion = (id, icon, title, contentHtml) => {
+                const finalContent = contentHtml ? contentHtml : '<p class="text-sm text-[var(--text-muted)] italic text-center py-4">Aún no hay contenido en esta sección.</p>';
+                return `
+                    <div class="border border-[var(--border-color)] rounded-2xl overflow-hidden bg-[var(--bg-card)] shadow-sm">
+                        <button onclick="toggleAccordion('${id}')" class="w-full p-4 text-left font-bold flex justify-between items-center hover:bg-[var(--primary)] hover:bg-opacity-5 transition-colors">
+                            <span class="flex items-center gap-3 text-lg"><i class="fas ${icon} text-[var(--primary)] w-5 text-center"></i> ${title}</span>
+                            <i class="fas fa-chevron-down transition-transform duration-300 text-[var(--text-muted)]" id="icon-${id}"></i>
+                        </button>
+                        <div id="${id}" class="hidden p-5 border-t border-[var(--border-color)] bg-[var(--bg-main)] bg-opacity-30">
+                            ${finalContent}
+                        </div>
+                    </div>
+                `;
+            };
+
+            let coreHtml = '';
+            if(p.sections && p.sections.core) {
+                (SECTION_FIELDS['core'] || []).forEach(f => {
+                    if(p.sections.core[f.id] && p.sections.core[f.id].trim() !== '') {
+                        coreHtml += `<div class="mb-5 last:mb-0"><strong class="text-[var(--primary)] flex items-center gap-2 text-xs uppercase tracking-wider mb-2"><i class="fas ${f.icon}"></i> ${f.label}</strong><p class="whitespace-pre-wrap text-sm leading-relaxed font-serif text-[var(--text-main)]">${escapeHtml(p.sections.core[f.id])}</p></div>`;
+                    }
+                });
+            }
+            html += buildAccordion('ref-core', 'fa-seedling', 'El Núcleo', coreHtml);
+
+            let charsHtml = '';
+            if(p.characters && p.characters.length > 0) {
+                p.characters.forEach(c => {
+                    charsHtml += `
+                        <div class="mb-5 pb-5 border-b border-[var(--border-color)] last:border-0 last:mb-0 last:pb-0">
+                            <div class="flex justify-between items-start mb-3">
+                                <h4 class="font-bold text-lg text-[var(--primary)]">${escapeHtml(c.name)}</h4>
+                                <span class="text-[10px] uppercase tracking-widest px-2 py-1 rounded-full border border-[var(--primary)] text-[var(--primary)] font-bold">${escapeHtml(c.role)}</span>
+                            </div>
+                            ${c.desire ? `<p class="text-sm mb-2"><strong class="font-bold">Deseo:</strong> ${escapeHtml(c.desire)}</p>` : ''}
+                            ${c.need ? `<p class="text-sm mb-2"><strong class="font-bold">Necesidad:</strong> ${escapeHtml(c.need)}</p>` : ''}
+                            ${c.appearance ? `<p class="text-sm mb-2"><strong class="font-bold">Apariencia:</strong> ${escapeHtml(c.appearance)}</p>` : ''}
+                            ${c.notes ? `<div class="mt-3 text-sm text-[var(--text-main)] whitespace-pre-wrap font-serif bg-[var(--bg-card)] border border-[var(--border-color)] p-4 rounded-xl shadow-sm">${escapeHtml(c.notes)}</div>` : ''}
+                            ${c.minigameAnswers ? `<div class="mt-3 text-sm text-[var(--text-main)] whitespace-pre-wrap font-serif bg-[var(--primary)] bg-opacity-10 border border-[var(--primary)] border-opacity-30 p-4 rounded-xl shadow-sm"><strong class="text-[var(--primary)] block mb-1"><i class="fas fa-gamepad"></i> Respuestas al minijuego:</strong>${escapeHtml(c.minigameAnswers)}</div>` : ''}
+                            ${!c.desire && !c.need && !c.appearance && !c.notes && !c.minigameAnswers ? '<p class="text-xs text-[var(--text-muted)] italic">Ficha sin completar</p>' : ''}
+                        </div>
+                    `;
+                });
+            }
+            html += buildAccordion('ref-chars', 'fa-users', 'Personajes', charsHtml);
+
+            let worldHtml = '';
+            if(p.sections && p.sections.world) {
+                (SECTION_FIELDS['world'] || []).forEach(f => {
+                    if(p.sections.world[f.id] && p.sections.world[f.id].trim() !== '') {
+                        worldHtml += `<div class="mb-5 last:mb-0"><strong class="text-[var(--primary)] flex items-center gap-2 text-xs uppercase tracking-wider mb-2"><i class="fas ${f.icon}"></i> ${f.label}</strong><p class="whitespace-pre-wrap text-sm leading-relaxed font-serif text-[var(--text-main)]">${escapeHtml(p.sections.world[f.id])}</p></div>`;
+                    }
+                });
+            }
+            html += buildAccordion('ref-world', 'fa-globe-europe', 'El Mundo y Voz', worldHtml);
+
+            let structHtml = '';
+            if(p.sections && p.sections.structure) {
+                (SECTION_FIELDS['structure'] || []).forEach(f => {
+                    if(p.sections.structure[f.id] && p.sections.structure[f.id].trim() !== '') {
+                        structHtml += `<div class="mb-5 last:mb-0"><strong class="text-[var(--primary)] flex items-center gap-2 text-xs uppercase tracking-wider mb-2"><i class="fas ${f.icon}"></i> ${f.label}</strong><p class="whitespace-pre-wrap text-sm leading-relaxed font-serif text-[var(--text-main)]">${escapeHtml(p.sections.structure[f.id])}</p></div>`;
+                    }
+                });
+            }
+            html += buildAccordion('ref-struct', 'fa-project-diagram', 'Estructura', structHtml);
+
+            let timeHtml = '';
+            if(p.timelineEvents && p.timelineEvents.length > 0) {
+                const sortedEvs = [...p.timelineEvents].sort((a,b) => calcAbstractTick(a) - calcAbstractTick(b));
+                sortedEvs.forEach(ev => {
+                    const timeArr = [];
+                    if(ev.year !== "" && ev.year !== null) timeArr.push(`A${ev.year}`);
+                    if(ev.month !== "" && ev.month !== null) timeArr.push(`M${ev.month}`);
+                    if(ev.day !== "" && ev.day !== null) timeArr.push(`D${ev.day}`);
+                    const timeStr = timeArr.length > 0 ? timeArr.join("-") : "Inicio";
+
+                    timeHtml += `
+                        <div class="border-l-4 border-[var(--primary)] pl-4 mb-5 pb-1 last:mb-0">
+                            <div class="flex flex-col mb-2">
+                                <span class="text-[10px] uppercase tracking-wider text-[var(--primary)] font-bold mb-1">${escapeHtml(ev.era)} <span class="text-[var(--text-muted)] opacity-70">• ${timeStr}</span></span>
+                                <h4 class="font-bold text-lg">${escapeHtml(ev.title)}</h4>
+                            </div>
+                            ${ev.desc ? `<p class="text-sm text-[var(--text-main)] mt-2 whitespace-pre-wrap font-serif bg-[var(--bg-card)] border border-[var(--border-color)] p-4 rounded-xl shadow-sm">${escapeHtml(ev.desc)}</p>` : ''}
+                        </div>
+                    `;
+                });
+            }
+            html += buildAccordion('ref-time', 'fa-stream', 'Cronología', timeHtml);
+
+            html += `</div>`;
+            cont.innerHTML = html;
+        };
+
+        window.openTimeline = function() { navigate('timeline'); };
+
+        window.renderTimeline = function() {
+            const p = getActiveProject();
+            const cont = document.getElementById('timeline-eras-container');
+            const empty = document.getElementById('empty-timeline-msg');
+            cont.innerHTML = '';
+            
+            if(!p.timelineEvents || p.timelineEvents.length === 0) { empty.classList.remove('hidden'); return; }
+            empty.classList.add('hidden');
+
+            const erasMap = {};
+            p.timelineEvents.forEach(ev => {
+                const eraName = (ev.era || "Principal").trim();
+                if(!erasMap[eraName]) erasMap[eraName] = [];
+                ev._tick = calcAbstractTick(ev); 
+                erasMap[eraName].push(ev);
+            });
+
+            const eras = Object.keys(erasMap).sort();
+
+            eras.forEach(era => {
+                const events = erasMap[era].sort((a,b) => a._tick - b._tick);
+                if(events.length === 0) return;
+
+                let minTick = events[0]._tick;
+                let maxTick = events[events.length - 1]._tick;
+                let range = maxTick - minTick;
+
+                const eraDiv = document.createElement('div');
+                eraDiv.className = 'bg-[var(--bg-card)] p-6 sm:p-8 rounded-3xl border border-[var(--border-color)] shadow-sm';
+                
+                let nodesHtml = '';
+                events.forEach((ev, i) => {
+                    let percent = 50; 
+                    if(range > 0) percent = ((ev._tick - minTick) / range) * 100;
+                    percent = Math.max(3, Math.min(97, percent)); 
+
+                    const timeArr = [];
+                    if(ev.year !== "" && ev.year !== null) timeArr.push(`A${ev.year}`);
+                    if(ev.month !== "" && ev.month !== null) timeArr.push(`M${ev.month}`);
+                    if(ev.day !== "" && ev.day !== null) timeArr.push(`D${ev.day}`);
+                    const timeStr = timeArr.length > 0 ? timeArr.join("-") : "Inicio";
+
+                    const b64Data = btoa(unescape(encodeURIComponent(JSON.stringify(ev))));
+                    
+                    nodesHtml += `
+                        <div class="timeline-node" style="left: ${percent}%;" onclick="editTimelineEvent('${b64Data}')" title="Clic para editar">
+                            <div class="timeline-node-label">
+                                <div class="font-bold text-[var(--primary)]">${escapeHtml(ev.title)}</div>
+                                <div class="text-[0.65rem] font-medium text-[var(--text-muted)]">${timeStr}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                eraDiv.innerHTML = `
+                    <h3 class="font-bold text-2xl mb-1 flex items-center gap-3"><i class="fas fa-hourglass-half text-[var(--primary)]"></i> ${escapeHtml(era)}</h3>
+                    <p class="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-8">${events.length} Evento(s)</p>
+                    <div class="timeline-track-container">
+                        <div class="timeline-thick-bar"></div>
+                        ${nodesHtml}
+                    </div>
+                `;
+                cont.appendChild(eraDiv);
+            });
+        };
+
+        window.openTimelineEventModal = function(ev = null) {
+            document.getElementById('ev-id').value = ev ? ev.id : '';
+            document.getElementById('ev-title').value = ev ? ev.title : '';
+            document.getElementById('ev-era').value = ev ? ev.era : 'Principal';
+            document.getElementById('ev-year').value = ev ? ev.year : '0';
+            document.getElementById('ev-month').value = ev ? ev.month : '';
+            document.getElementById('ev-day').value = ev ? ev.day : '';
+            document.getElementById('ev-hour').value = ev ? ev.hour : '';
+            document.getElementById('ev-minute').value = ev ? ev.minute : '';
+            document.getElementById('ev-desc').value = ev ? (ev.desc || '') : '';
+            
+            document.getElementById('timeline-modal-title').innerHTML = ev ? '<i class="fas fa-edit text-[var(--primary)]"></i> Editar Evento' : '<i class="fas fa-calendar-plus text-[var(--primary)]"></i> Crear Evento';
+            document.getElementById('btn-delete-ev').classList.toggle('hidden', !ev);
+            
+            openModal('timeline-event');
+        };
+
+        window.editTimelineEvent = function(b64Data) {
+            try {
+                const evStr = decodeURIComponent(escape(atob(b64Data)));
+                const evObj = JSON.parse(evStr);
+                openTimelineEventModal(evObj);
+            } catch(e) { console.error("Error parseando evento de cronología", e); }
+        };
+
+        window.saveTimelineEvent = function() {
+            const id = document.getElementById('ev-id').value;
+            const title = document.getElementById('ev-title').value.trim();
+            if(!title) { window.showToast("El título es obligatorio", "error"); return; }
+            
+            const p = getActiveProject();
+            if(!p.timelineEvents) p.timelineEvents = [];
+
+            const evData = {
+                id: id || 'te_' + Date.now(),
+                title: title, desc: document.getElementById('ev-desc').value,
+                era: document.getElementById('ev-era').value.trim() || 'Principal',
+                year: document.getElementById('ev-year').value,
+                month: document.getElementById('ev-month').value,
+                day: document.getElementById('ev-day').value,
+                hour: document.getElementById('ev-hour').value,
+                minute: document.getElementById('ev-minute').value,
+            };
+
+            if(id) {
+                const idx = p.timelineEvents.findIndex(e => e.id === id);
+                if(idx > -1) p.timelineEvents[idx] = evData;
+            } else { p.timelineEvents.push(evData); }
+
+            p.updatedAt = Date.now(); saveData(); closeModal('timeline-event'); renderTimeline();
+        };
+
+        window.deleteTimelineEvent = function() {
+            const id = document.getElementById('ev-id').value;
+            if(!id || !confirm("¿Borrar este evento?")) return;
+            const p = getActiveProject();
+            p.timelineEvents = p.timelineEvents.filter(e => e.id !== id);
+            p.updatedAt = Date.now(); saveData(); closeModal('timeline-event'); renderTimeline();
+        };
+
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function initApp() {
+            setupAutoExpand();
+            loadData();
+            applySettings();
+            
+            history.replaceState({ view: 'home' }, '', '#home');
+            navigate('home', false);
+        }
+
+        window.addEventListener('DOMContentLoaded', initApp);
+
+    </script>
+</body>
+</html>
